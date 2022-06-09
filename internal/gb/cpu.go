@@ -68,7 +68,8 @@ func (cpu *CPU) decodeAndExecute(op byte) {
 func (cpu *CPU) logInstruction() {
 	if cpu.bus.debugMode {
 		logMsg := cpu.bus.disassembly[cpu.PC]
-		cpu.bus.logger.Println(logMsg)
+		cpu.bus.log(logMsg)
+		// cpu.bus.logger.Println(logMsg)
 	}
 }
 

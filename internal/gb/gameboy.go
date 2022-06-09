@@ -1,8 +1,10 @@
 package gb
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"text/tabwriter"
 )
 
 // GameBoy represents a software emulation of Nintendo's Game Boy handheld game
@@ -17,7 +19,10 @@ type GameBoy struct {
 
 	// Internal variables
 	isRunning bool
-	logger    *log.Logger
+
+	// Logging
+	logger *log.Logger
+	tw     *tabwriter.Writer
 
 	debugMode bool
 
@@ -29,9 +34,11 @@ type GameBoy struct {
 func New(romPath string, debug bool) *GameBoy {
 	logger := log.Default()
 	logger.SetFlags(0)
+	tw := tabwriter.NewWriter(logger.Writer(), 8, 4, 1, '\t', 0)
 
 	gb := &GameBoy{
-		logger:    log.Default(),
+		logger:    logger,
+		tw:        tw,
 		debugMode: debug,
 	}
 	cpu := newCPU()
@@ -53,6 +60,12 @@ func (gb *GameBoy) Start() {
 		gb.Cpu.execNextInst()
 		gb.printDebug()
 	}
+}
+
+// log logs a message to the GameBoy's logger
+func (gb *GameBoy) log(msg string) {
+	fmt.Fprintln(gb.tw, msg)
+	gb.tw.Flush()
 }
 
 // TODO: accept a cartridge type, extract loading the file from this method

@@ -1,8 +1,10 @@
 package gb
 
-import "fmt"
+import (
+	"fmt"
+)
 
-var prefix string = "[%#04x] %02X:\t%s "
+const lineTemplate string = "[%#04x]\t%s\t%s "
 
 // disassemble disassembles the system's loaded cartridge ROM between addresses
 // 'start' and 'end', and stores the result in the 'gb.disassembly'
@@ -13,13 +15,23 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 
 	disassembly := make([]string, len(gb.CartRom))
 
-	complete := false
-	for addr := start; !complete; addr++ {
+	addr := start
+	for {
 		op := gb.CartRom[addr]
-		// op1 := gb.CartRom[addr+1]
-		// op2 := gb.CartRom[addr+2]
+		op1 := gb.CartRom[addr+1]
+		op2 := gb.CartRom[addr+2]
 		word := gb.Cpu.readWord(addr + 1) // next word
-		msg := fmt.Sprintf(prefix, addr, op, instructions[op].name)
+		inst := instructions[op]
+
+		opString := fmt.Sprintf("%02X", op)
+		if inst.length > 1 {
+			opString += fmt.Sprintf(" %02X", op1)
+		}
+		if inst.length > 2 {
+			opString += fmt.Sprintf(" %02X", op2)
+		}
+
+		msg := fmt.Sprintf(lineTemplate, addr, opString, inst.name)
 
 		switch op {
 		case 0x00:
@@ -31,8 +43,10 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		}
 
 		disassembly[addr] = msg
+
+		addr++
 		if addr >= end {
-			complete = true
+			break
 		}
 	}
 

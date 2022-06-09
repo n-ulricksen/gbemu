@@ -12,6 +12,7 @@ const INSTRUCTION_COUNT = 0x100
 
 var instructions = [INSTRUCTION_COUNT]instruction{}
 
+// Set up instruction lookup array
 func init() {
 	instructions[0x00] = instruction{"NOP", 1, 1}
 	instructions[0x31] = instruction{"LD", 3, 3}
