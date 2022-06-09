@@ -13,6 +13,6 @@ const INSTRUCTION_COUNT = 0x100
 var instructions = [INSTRUCTION_COUNT]instruction{}
 
 func init() {
-	instructions[0x00] = instruction{"NOP", 1, 4}
-	instructions[0xC3] = instruction{"JP", 3, 16}
+	instructions[0x00] = instruction{"NOP", 1, 1}
+	instructions[0xC3] = instruction{"JP", 3, 4}
 }
