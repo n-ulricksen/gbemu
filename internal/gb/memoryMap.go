@@ -1,12 +1,14 @@
 package gb
 
 const (
-	CARTRIDGE_ROM_00_START uint16 = 0x0000 // 16KB from cartridge
-	CARTRIDGE_ROM_00_END          = 0x3FFF
-	CARTRIDGE_ROM_01_START        = 0x4000 // 16KB from cartridge via mapper
-	CARTRIDGE_ROM_01_END          = 0x7FFF
-	CARTRIDGE_HEADER_START        = 0x0100 // 80B
-	CARTRIDGE_HEADER_END          = 0x014F
+	ENTRY_POINT uint16 = 0x0100
+
+	CARTRIDGE_ROM_00_START = 0x0000 // 16KB from cartridge
+	CARTRIDGE_ROM_00_END   = 0x3FFF
+	CARTRIDGE_ROM_01_START = 0x4000 // 16KB from cartridge via mapper
+	CARTRIDGE_ROM_01_END   = 0x7FFF
+	CARTRIDGE_HEADER_START = 0x0100 // 80B
+	CARTRIDGE_HEADER_END   = 0x014F
 
 	VRAM_START          = 0x8000 // 8KB
 	VRAM_END            = 0x9FFF
@@ -33,4 +35,6 @@ const (
 	HRAM_END   = 0xFFFE
 
 	INTERRUPT_ENABLE = 0xFFFF // 1B
+
+	MAX_ADDRESSABLE_ADDR = 0xFFFF // 1B
 )

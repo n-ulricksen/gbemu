@@ -5,17 +5,17 @@ type flag byte
 
 // Flag bits found in the lower 8 bits of the AF register
 const (
-	c flag = 1 << (iota + 4) // Carry
-	h                        // Half Carry
-	n                        // Subraction
-	z                        // Zero
+	FLAG_C flag = 1 << (iota + 4) // Carry
+	FLAG_H                        // Half Carry
+	FLAG_N                        // Subraction
+	FLAG_Z                        // Zero
 )
 
 // setFlag sets a bit in the flag register to the given val
-func (r *register) setFlag(f flag, val bool) {
+func (cpu *CPU) setFlag(f flag, val bool) {
 	if val {
-		r.value |= uint16(f)
+		cpu.AF.setLo(cpu.AF.loVal() | byte(f))
 	} else {
-		r.value &^= uint16(f)
+		cpu.AF.setLo(cpu.AF.loVal() &^ byte(f))
 	}
 }
