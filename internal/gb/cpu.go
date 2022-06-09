@@ -10,6 +10,8 @@ type CPU struct {
 	SP uint16 // Stack pointer
 	PC uint16 // Program counter
 
+	IME bool // Interrupt master enable flag
+
 	bus *GameBoy // 16-bit address, 8-bit data bus
 
 	// regLookup8Bit [8]*register8Bit
@@ -44,13 +46,16 @@ func (cpu *CPU) execNextInst() {
 
 // decodeAndExecude decodes the given opcode and executes its CPU instruction
 func (cpu *CPU) decodeAndExecute(op byte) {
-
 	switch op {
 	case 0x00:
 		cpu.nop()
+	case 0x31:
+		cpu.SP = cpu.readWord(cpu.PC + 1)
 	case 0xC3:
 		addr := cpu.readWord(cpu.PC + 1)
 		defer cpu.jp(addr) // defer to skip incrementing PC
+	case 0xF3:
+		cpu.di()
 	default:
 		cpu.bus.logger.Fatalf("unimplemented op: %02X %#08b\n", op, op)
 	}
