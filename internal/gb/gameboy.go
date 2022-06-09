@@ -34,7 +34,7 @@ type GameBoy struct {
 func New(romPath string, debug bool) *GameBoy {
 	logger := log.Default()
 	logger.SetFlags(0)
-	tw := tabwriter.NewWriter(logger.Writer(), 8, 4, 1, '\t', 0)
+	tw := tabwriter.NewWriter(logger.Writer(), 10, 8, 2, ' ', 0)
 
 	gb := &GameBoy{
 		logger:    logger,
