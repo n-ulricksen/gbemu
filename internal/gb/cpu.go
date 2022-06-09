@@ -54,6 +54,9 @@ func (cpu *CPU) decodeAndExecute(op byte) {
 	case 0xC3:
 		addr := cpu.readWord(cpu.PC + 1)
 		defer cpu.jp(addr) // defer to skip incrementing PC
+	case 0xEA:
+		addr := cpu.readWord(cpu.PC + 1)
+		cpu.ld8(addr, cpu.AF.loVal())
 	case 0xF3:
 		cpu.di()
 	default:

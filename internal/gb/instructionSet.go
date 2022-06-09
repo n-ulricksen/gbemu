@@ -1,7 +1,11 @@
 package gb
 
+// ld8 loads a byte into memory at the given address
+func (cpu *CPU) ld8(addr uint16, data byte) {
+	cpu.write(addr, data)
+}
+
 // jp jumps unconditionally to the given 16-bit address
-// 	JP nn
 func (cpu *CPU) jp(addr uint16) {
 	cpu.PC = addr
 }

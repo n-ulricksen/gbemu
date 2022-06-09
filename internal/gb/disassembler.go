@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-const lineTemplate string = "[%#04x]\t%s\t%s "
+const lineTemplate string = "[%#04x]:\t%s\t%s "
 
 // disassemble disassembles the system's loaded cartridge ROM between addresses
 // 'start' and 'end', and stores the result in the 'gb.disassembly'
@@ -35,11 +35,18 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 
 		switch op {
 		case 0x00:
+			// NOP
 		case 0x31:
-			msg += fmt.Sprintf("SP, #$%x", word)
+			// LD SP, nn
+			msg += fmt.Sprintf("SP, 0x%X", word)
 		case 0xC3:
-			msg += fmt.Sprintf("#$%04x", word)
+			// JP nn
+			msg += fmt.Sprintf("0x%04X", word)
+		case 0xEA:
+			// LD (nn), A
+			msg += fmt.Sprintf("(0x%04X), A", word)
 		case 0xF3:
+			// DI
 		}
 
 		disassembly[addr] = msg
