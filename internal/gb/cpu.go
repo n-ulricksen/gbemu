@@ -14,8 +14,6 @@ type CPU struct {
 
 	bus *GameBoy // 16-bit address, 8-bit data bus
 
-	// regLookup8Bit [8]*register8Bit
-
 	cycles int
 }
 
