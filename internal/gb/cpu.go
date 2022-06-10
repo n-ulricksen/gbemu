@@ -27,6 +27,7 @@ func newCPU() *CPU {
 		DE: register{name: "DE", hiReg: newReg8Bit("D"), loReg: newReg8Bit("E")},
 		HL: register{name: "HL", hiReg: newReg8Bit("H"), loReg: newReg8Bit("L")},
 	}
+	cpu.setupInstructionLookup()
 
 	return cpu
 }
@@ -46,38 +47,15 @@ func (cpu *CPU) execNextInst() {
 
 // decodeAndExecude decodes the given opcode and executes its CPU instruction
 func (cpu *CPU) decodeAndExecute(op byte) {
-	switch op {
-	case 0x00:
-		cpu.nop()
-	case 0x21:
-		data := cpu.readWord(cpu.PC + 1)
-		cpu.HL.set(data)
-	case 0x31:
-		cpu.SP = cpu.readWord(cpu.PC + 1)
-	case 0x3E:
-		data := cpu.read(cpu.PC + 1)
-		cpu.AF.setHi(data)
-	case 0xC3:
-		addr := cpu.readWord(cpu.PC + 1)
-		defer cpu.jp(addr) // defer to skip incrementing PC
-	case 0xCD:
-		addr := cpu.readWord(cpu.PC + 1)
-		defer cpu.call(addr)
-	case 0xE0:
-		lo := cpu.read(cpu.PC + 1)
-		addr := u16(lo, 0xFF)
-		cpu.ld8(addr, cpu.AF.hiVal())
-	case 0xEA:
-		addr := cpu.readWord(cpu.PC + 1)
-		cpu.ld8(addr, cpu.AF.hiVal())
-	case 0xF3:
-		cpu.di()
-	default:
+	inst := instructions[op]
+	if inst.exec == nil {
 		cpu.bus.logger.Fatalf("unimplemented op: %02X %#08b\n", op, op)
 	}
 
-	cpu.PC += instructions[op].length
-	cpu.cycles += instructions[op].cycles
+	inst.exec()
+
+	cpu.PC += inst.length
+	cpu.cycles += inst.cycles
 }
 
 // logInstruction logs the disassembly for the current CPU instruction
@@ -85,7 +63,6 @@ func (cpu *CPU) logInstruction() {
 	if cpu.bus.debugMode {
 		logMsg := cpu.bus.disassembly[cpu.PC]
 		cpu.bus.log(logMsg)
-		// cpu.bus.logger.Println(logMsg)
 	}
 }
 

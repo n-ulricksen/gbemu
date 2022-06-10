@@ -45,6 +45,12 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		case 0x3E:
 			// LD A,n
 			msg += fmt.Sprintf("A,0x%02X", op1)
+		case 0x7C:
+			// LD A,H
+			msg += "A,H"
+		case 0x7D:
+			// LD A,L
+			msg += "A,L"
 		case 0xC3:
 			// JP nn
 			msg += fmt.Sprintf("0x%04X", word)
