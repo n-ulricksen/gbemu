@@ -49,3 +49,8 @@ func (r *register) setHi(val byte) {
 func (r *register) setLo(val byte) {
 	r.loReg.value = val
 }
+
+// inc increments the value stored in the register by one
+func (r *register) inc() {
+	r.set(r.get() + 1)
+}
