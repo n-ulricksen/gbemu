@@ -85,6 +85,7 @@ func (gb *GameBoy) insertCartridge(romPath string) error {
 
 func (gb *GameBoy) initPowerUpSequence() {
 	gb.Cpu.PC = ENTRY_POINT
+	gb.Cpu.SP = 0xFFFE
 	gb.isRunning = true
 }
 func (gb *GameBoy) printDebug() {
