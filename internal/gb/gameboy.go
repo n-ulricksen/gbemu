@@ -58,7 +58,6 @@ func (gb *GameBoy) Start() {
 
 	for gb.isRunning {
 		gb.Cpu.execNextInst()
-		gb.printDebug()
 	}
 }
 
