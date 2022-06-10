@@ -14,8 +14,8 @@ const (
 // setFlag sets a bit in the flag register to the given val
 func (cpu *CPU) setFlag(f flag, val bool) {
 	if val {
-		cpu.AF.setLo(cpu.AF.loVal() | byte(f))
+		cpu.AF.setLo(cpu.AF.getLo() | byte(f))
 	} else {
-		cpu.AF.setLo(cpu.AF.loVal() &^ byte(f))
+		cpu.AF.setLo(cpu.AF.getLo() &^ byte(f))
 	}
 }

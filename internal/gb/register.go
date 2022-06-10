@@ -19,18 +19,18 @@ func newReg8Bit(name string) register8Bit {
 	return register8Bit{name: name}
 }
 
-// val returns the 16-bit register value
-func (r *register) val() uint16 {
+// get returns the 16-bit register value
+func (r *register) get() uint16 {
 	return (uint16(r.hiReg.value) << 8) | uint16(r.loReg.value)
 }
 
 // hi returns the register's upper byte
-func (r *register) hiVal() byte {
+func (r *register) getHi() byte {
 	return r.hiReg.value
 }
 
 // hi returns the register's lower byte
-func (r *register) loVal() byte {
+func (r *register) getLo() byte {
 	return r.loReg.value
 }
 

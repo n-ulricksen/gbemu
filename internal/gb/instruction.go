@@ -21,22 +21,34 @@ var instructions = [INSTRUCTION_COUNT]instruction{}
 // lookup array
 func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x00] = instruction{"NOP", 1, 1, cpu.op00}
+	instructions[0x02] = instruction{"LD", 1, 2, cpu.op02}
 	instructions[0x18] = instruction{"JR", 2, 3, cpu.op18}
 	instructions[0x21] = instruction{"LD", 3, 3, cpu.op21}
 	instructions[0x31] = instruction{"LD", 3, 3, cpu.op31}
 	instructions[0x3E] = instruction{"LD", 2, 2, cpu.op3E}
 	instructions[0x7C] = instruction{"LD", 1, 1, cpu.op7C}
 	instructions[0x7D] = instruction{"LD", 1, 1, cpu.op7D}
+	instructions[0xA3] = instruction{"AND", 1, 1, cpu.opA3}
 	instructions[0xC3] = instruction{"JP", 3, 4, cpu.opC3}
 	instructions[0xC9] = instruction{"RET", 1, 4, cpu.opC9}
 	instructions[0xCD] = instruction{"CALL", 3, 6, cpu.opCD}
 	instructions[0xE0] = instruction{"LDH", 2, 3, cpu.opE0}
+	instructions[0xE1] = instruction{"POP", 1, 3, cpu.opE1}
+	instructions[0xE5] = instruction{"PUSH", 1, 4, cpu.opE5}
 	instructions[0xEA] = instruction{"LD", 3, 4, cpu.opEA}
 	instructions[0xF3] = instruction{"DI", 1, 1, cpu.opF3}
+	instructions[0xF5] = instruction{"PUSH", 1, 4, cpu.opF5}
 }
 
 // NOP
 func (cpu *CPU) op00() {}
+
+// LD (BC),A
+func (cpu *CPU) op02() {
+	data := cpu.AF.getHi()
+	addr := cpu.BC.get()
+	cpu.ld8(addr, data)
+}
 
 // JR e
 func (cpu *CPU) op18() {
@@ -65,14 +77,20 @@ func (cpu *CPU) op3E() {
 
 // LD A,H
 func (cpu *CPU) op7C() {
-	data := cpu.HL.hiVal()
+	data := cpu.HL.getHi()
 	cpu.AF.setHi(data)
 }
 
 // LD A,L
 func (cpu *CPU) op7D() {
-	data := cpu.HL.loVal()
+	data := cpu.HL.getLo()
 	cpu.AF.setHi(data)
+}
+
+// AND E
+func (cpu *CPU) opA3() {
+	res := cpu.AF.getHi() & cpu.DE.getLo()
+	cpu.AF.setHi(res)
 }
 
 // JP nn
@@ -102,16 +120,36 @@ func (cpu *CPU) opCD() {
 func (cpu *CPU) opE0() {
 	lo := cpu.read(cpu.PC + 1)
 	addr := u16(lo, 0xFF)
-	cpu.ld8(addr, cpu.AF.hiVal())
+	data := cpu.AF.getHi()
+	cpu.ld8(addr, data)
+}
+
+// POP HL
+func (cpu *CPU) opE1() {
+	data := cpu.pop()
+	cpu.HL.set(data)
+}
+
+// PUSH HL
+func (cpu *CPU) opE5() {
+	data := cpu.HL.get()
+	cpu.push(data)
 }
 
 // LD (nn),A
 func (cpu *CPU) opEA() {
 	addr := cpu.readWord(cpu.PC + 1)
-	cpu.ld8(addr, cpu.AF.hiVal())
+	data := cpu.AF.getHi()
+	cpu.ld8(addr, data)
 }
 
 // DI
 func (cpu *CPU) opF3() {
 	cpu.di()
+}
+
+// PUSH AF
+func (cpu *CPU) opF5() {
+	data := cpu.AF.get()
+	cpu.push(data)
 }

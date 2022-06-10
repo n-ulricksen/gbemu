@@ -10,21 +10,30 @@ func (cpu *CPU) jp(addr uint16) {
 	cpu.PC = addr
 }
 
-// call performs an unconditional function all to the given address
-func (cpu *CPU) call(addr uint16) {
-	hi := byte(cpu.PC >> 8)
-	lo := byte(cpu.PC + 1)
+// push pushes a word of data to the stack
+func (cpu *CPU) push(data uint16) {
+	hi := byte(data >> 8)
+	lo := byte(data)
 	cpu.stackPush(hi)
 	cpu.stackPush(lo)
+}
 
+// pop returns the top word on the stack
+func (cpu *CPU) pop() uint16 {
+	lo := cpu.stackPop()
+	hi := cpu.stackPop()
+	return u16(lo, hi)
+}
+
+// call performs an unconditional function all to the given address
+func (cpu *CPU) call(addr uint16) {
+	cpu.push(cpu.PC + 1)
 	cpu.PC = addr
 }
 
 // ret unconditionally returns from a function
 func (cpu *CPU) ret() {
-	lo := cpu.stackPop()
-	hi := cpu.stackPop()
-	cpu.PC = u16(lo, hi)
+	cpu.PC = cpu.pop()
 }
 
 // di disables interrupt handling
