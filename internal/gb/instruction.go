@@ -21,36 +21,50 @@ var instructions = [INSTRUCTION_COUNT]instruction{}
 // lookup array
 func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x00] = instruction{"NOP", 1, 1, cpu.op00}
+	instructions[0x01] = instruction{"LD", 3, 3, cpu.op01}
 	instructions[0x02] = instruction{"LD", 1, 2, cpu.op02}
 	instructions[0x03] = instruction{"INC", 1, 2, cpu.op03}
 	instructions[0x18] = instruction{"JR", 2, 3, cpu.op18}
 	instructions[0x21] = instruction{"LD", 3, 3, cpu.op21}
 	instructions[0x23] = instruction{"INC", 1, 2, cpu.op23}
+	instructions[0x20] = instruction{"JR", 2, 2, cpu.op20}
+	instructions[0x28] = instruction{"JR", 2, 2, cpu.op28}
 	instructions[0x2A] = instruction{"LD", 1, 2, cpu.op2A}
 	instructions[0x31] = instruction{"LD", 3, 3, cpu.op31}
 	instructions[0x3C] = instruction{"INC", 1, 1, cpu.op3C}
 	instructions[0x3E] = instruction{"LD", 2, 2, cpu.op3E}
 	instructions[0x5D] = instruction{"LD", 1, 1, cpu.op5D}
+	instructions[0x78] = instruction{"LD", 1, 1, cpu.op78}
 	instructions[0x7B] = instruction{"LD", 1, 1, cpu.op7B}
 	instructions[0x7C] = instruction{"LD", 1, 1, cpu.op7C}
 	instructions[0x7D] = instruction{"LD", 1, 1, cpu.op7D}
 	instructions[0x8E] = instruction{"ADC", 1, 2, cpu.op8E}
 	instructions[0xA3] = instruction{"AND", 1, 1, cpu.opA3}
+	instructions[0xB1] = instruction{"OR", 1, 1, cpu.opB1}
 	instructions[0xC3] = instruction{"JP", 3, 4, cpu.opC3}
+	instructions[0xC5] = instruction{"PUSH", 1, 4, cpu.opC5}
 	instructions[0xC9] = instruction{"RET", 1, 4, cpu.opC9}
 	instructions[0xCD] = instruction{"CALL", 3, 6, cpu.opCD}
 	instructions[0xE0] = instruction{"LDH", 2, 3, cpu.opE0}
 	instructions[0xE1] = instruction{"POP", 1, 3, cpu.opE1}
 	instructions[0xE5] = instruction{"PUSH", 1, 4, cpu.opE5}
 	instructions[0xEA] = instruction{"LD", 3, 4, cpu.opEA}
+	instructions[0xF0] = instruction{"LDH", 2, 3, cpu.opF0}
 	instructions[0xF1] = instruction{"POP", 1, 3, cpu.opF1}
 	instructions[0xF3] = instruction{"DI", 1, 1, cpu.opF3}
 	instructions[0xF5] = instruction{"PUSH", 1, 4, cpu.opF5}
+	instructions[0xFE] = instruction{"CP", 2, 2, cpu.opFE}
 	instructions[0xFF] = instruction{"RST", 1, 4, cpu.opFF}
 }
 
 // NOP
 func (cpu *CPU) op00() {}
+
+// LD BC,nn
+func (cpu *CPU) op01() {
+	data := cpu.readWord(cpu.PC + 1)
+	cpu.BC.set(data)
+}
 
 // LD (BC),A
 func (cpu *CPU) op02() {
@@ -79,6 +93,24 @@ func (cpu *CPU) op21() {
 // INC HL
 func (cpu *CPU) op23() {
 	cpu.HL.inc()
+}
+
+// JR NZ,e
+func (cpu *CPU) op20() {
+	if !cpu.getFlag(FLAG_Z) {
+		offset := cpu.read(cpu.PC + 1)
+		cpu.PC += uint16(offset)
+		cpu.cycles++
+	}
+}
+
+// JR Z,e
+func (cpu *CPU) op28() {
+	if cpu.getFlag(FLAG_Z) {
+		offset := cpu.read(cpu.PC + 1)
+		cpu.PC += uint16(offset)
+		cpu.cycles++
+	}
 }
 
 // LD A,(HL+)
@@ -118,6 +150,12 @@ func (cpu *CPU) op5D() {
 	cpu.DE.setLo(data)
 }
 
+// LD A,B
+func (cpu *CPU) op78() {
+	data := cpu.BC.getHi()
+	cpu.AF.setHi(data)
+}
+
 // LD A,E
 func (cpu *CPU) op7B() {
 	data := cpu.DE.getLo()
@@ -138,11 +176,19 @@ func (cpu *CPU) op7D() {
 
 // ADC A,(HL)
 func (cpu *CPU) op8E() {
+	carry := byte(0)
+	if cpu.getFlag(FLAG_C) {
+		carry = 1
+	}
+
+	add1 := cpu.read(cpu.HL.get()) + carry
+	add2 := cpu.AF.getHi()
+	res := add1 + add2
 
 	cpu.setFlag(FLAG_Z, res == 0)
 	cpu.setFlag(FLAG_N, false)
-	// cpu.setFlag(FLAG_H, true)
-	// cpu.setFlag(FLAG_C, true)
+	cpu.setFlag(FLAG_H, halfCarryOccurs(add1, add2))
+	cpu.setFlag(FLAG_C, add1 > res)
 }
 
 // AND E
@@ -156,12 +202,29 @@ func (cpu *CPU) opA3() {
 	cpu.setFlag(FLAG_C, false)
 }
 
+// OR C
+func (cpu *CPU) opB1() {
+	res := cpu.AF.getHi() | cpu.BC.getLo()
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, false)
+}
+
 // JP nn
 func (cpu *CPU) opC3() {
 	addr := cpu.readWord(cpu.PC + 1)
 	cpu.jp(addr)
 
 	cpu.PC -= instructions[0xC3].length
+}
+
+// PUSH BC
+func (cpu *CPU) opC5() {
+	data := cpu.BC.get()
+	cpu.push(data)
 }
 
 // RET
@@ -206,6 +269,14 @@ func (cpu *CPU) opEA() {
 	cpu.ld8(addr, data)
 }
 
+// LDH A,(n)
+func (cpu *CPU) opF0() {
+	lo := cpu.read(cpu.PC + 1)
+	addr := u16(lo, 0xFF)
+	data := cpu.read(addr)
+	cpu.AF.setHi(data)
+}
+
 // POP AF
 func (cpu *CPU) opF1() {
 	data := cpu.pop()
@@ -221,6 +292,19 @@ func (cpu *CPU) opF3() {
 func (cpu *CPU) opF5() {
 	data := cpu.AF.get()
 	cpu.push(data)
+}
+
+// CP n
+func (cpu *CPU) opFE() {
+	n := cpu.read(cpu.PC + 1)
+	add1 := cpu.AF.getHi()
+	add2 := byte(int(n) * -1)
+	res := add1 + add2
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, true)
+	cpu.setFlag(FLAG_H, halfCarryOccurs(add1, add2))
+	cpu.setFlag(FLAG_C, add1 > res)
 }
 
 // RST n

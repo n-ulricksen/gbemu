@@ -20,6 +20,12 @@ func (cpu *CPU) setFlag(f flag, val bool) {
 	}
 }
 
+// getFlag gets the specified flag's value
+func (cpu *CPU) getFlag(f flag) bool {
+	flags := cpu.AF.getLo()
+	return (flags & byte(f)) > 0
+}
+
 // halfCarryOccurs returns whether a half carry occurs when adding together the
 // two given bytes
 func halfCarryOccurs(b1, b2 byte) bool {
