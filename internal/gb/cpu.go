@@ -49,6 +49,9 @@ func (cpu *CPU) decodeAndExecute(op byte) {
 	switch op {
 	case 0x00:
 		cpu.nop()
+	case 0x21:
+		data := cpu.readWord(cpu.PC + 1)
+		cpu.HL.set(data)
 	case 0x31:
 		cpu.SP = cpu.readWord(cpu.PC + 1)
 	case 0x3E:
@@ -57,6 +60,13 @@ func (cpu *CPU) decodeAndExecute(op byte) {
 	case 0xC3:
 		addr := cpu.readWord(cpu.PC + 1)
 		defer cpu.jp(addr) // defer to skip incrementing PC
+	case 0xCD:
+		addr := cpu.readWord(cpu.PC + 1)
+		defer cpu.call(addr)
+	case 0xE0:
+		lo := cpu.read(cpu.PC + 1)
+		addr := u16(lo, 0xFF)
+		cpu.ld8(addr, cpu.AF.hiVal())
 	case 0xEA:
 		addr := cpu.readWord(cpu.PC + 1)
 		cpu.ld8(addr, cpu.AF.hiVal())
@@ -95,4 +105,17 @@ func (cpu *CPU) readWord(addr uint16) uint16 {
 	lo := uint16(cpu.read(addr))
 	hi := uint16(cpu.read(addr + 1))
 	return (hi << 8) | lo
+}
+
+// stackPush pushes a byte of data to the stack
+func (cpu *CPU) stackPush(data byte) {
+	cpu.SP--
+	cpu.write(cpu.SP, data)
+}
+
+// stackPop pops a byte of data from the stack
+func (cpu *CPU) stackPop() byte {
+	data := cpu.read(cpu.SP)
+	cpu.SP++
+	return data
 }

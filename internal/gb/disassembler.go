@@ -36,17 +36,26 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		switch op {
 		case 0x00:
 			// NOP
+		case 0x21:
+			// LD HL,nn
+			msg += fmt.Sprintf("HL,0x%04X", word)
 		case 0x31:
-			// LD SP, nn
+			// LD SP,nn
 			msg += fmt.Sprintf("SP,0x%04X", word)
 		case 0x3E:
-			// LD A, n
+			// LD A,n
 			msg += fmt.Sprintf("A,0x%02X", op1)
 		case 0xC3:
 			// JP nn
 			msg += fmt.Sprintf("0x%04X", word)
+		case 0xCD:
+			// CALL nn
+			msg += fmt.Sprintf("(0x%04X)", word)
+		case 0xE0:
+			// LDH (n),A
+			msg += fmt.Sprintf("(0xFF%02X),A", op1)
 		case 0xEA:
-			// LD (nn), A
+			// LD (nn),A
 			msg += fmt.Sprintf("(0x%04X),A", word)
 		case 0xF3:
 			// DI

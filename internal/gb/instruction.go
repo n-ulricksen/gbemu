@@ -15,9 +15,12 @@ var instructions = [INSTRUCTION_COUNT]instruction{}
 // Set up instruction lookup array
 func init() {
 	instructions[0x00] = instruction{"NOP", 1, 1}
+	instructions[0x21] = instruction{"LD", 3, 3}
 	instructions[0x31] = instruction{"LD", 3, 3}
 	instructions[0x3E] = instruction{"LD", 2, 2}
 	instructions[0xC3] = instruction{"JP", 3, 4}
+	instructions[0xCD] = instruction{"CALL", 3, 6}
+	instructions[0xE0] = instruction{"LDH", 2, 3}
 	instructions[0xEA] = instruction{"LD", 3, 4}
 	instructions[0xF3] = instruction{"DI", 1, 1}
 }
