@@ -13,11 +13,18 @@ func (cpu *CPU) jp(addr uint16) {
 // call performs an unconditional function all to the given address
 func (cpu *CPU) call(addr uint16) {
 	hi := byte(cpu.PC >> 8)
-	lo := byte(cpu.PC)
+	lo := byte(cpu.PC + 1)
 	cpu.stackPush(hi)
 	cpu.stackPush(lo)
 
 	cpu.PC = addr
+}
+
+// ret unconditionally returns from a function
+func (cpu *CPU) ret() {
+	lo := cpu.stackPop()
+	hi := cpu.stackPop()
+	cpu.PC = u16(lo, hi)
 }
 
 // di disables interrupt handling

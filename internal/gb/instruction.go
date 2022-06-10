@@ -10,20 +10,25 @@ type instruction struct {
 	exec   func() // method to execute instruction
 }
 
+// 0x00 - 0xFF
 const INSTRUCTION_COUNT = 0x100
 
+// instructions is the instruction lookup array, used by the CPU during the
+// decode stage
 var instructions = [INSTRUCTION_COUNT]instruction{}
 
 // setupInstuctionLookup defines all legal CPU instructions for the instruction
 // lookup array
 func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x00] = instruction{"NOP", 1, 1, cpu.op00}
+	instructions[0x18] = instruction{"JR", 2, 3, cpu.op18}
 	instructions[0x21] = instruction{"LD", 3, 3, cpu.op21}
 	instructions[0x31] = instruction{"LD", 3, 3, cpu.op31}
 	instructions[0x3E] = instruction{"LD", 2, 2, cpu.op3E}
 	instructions[0x7C] = instruction{"LD", 1, 1, cpu.op7C}
 	instructions[0x7D] = instruction{"LD", 1, 1, cpu.op7D}
 	instructions[0xC3] = instruction{"JP", 3, 4, cpu.opC3}
+	instructions[0xC9] = instruction{"RET", 1, 4, cpu.opC9}
 	instructions[0xCD] = instruction{"CALL", 3, 6, cpu.opCD}
 	instructions[0xE0] = instruction{"LDH", 2, 3, cpu.opE0}
 	instructions[0xEA] = instruction{"LD", 3, 4, cpu.opEA}
@@ -32,6 +37,14 @@ func (cpu *CPU) setupInstructionLookup() {
 
 // NOP
 func (cpu *CPU) op00() {}
+
+// JR e
+func (cpu *CPU) op18() {
+	offset := cpu.read(cpu.PC + 1)
+	cpu.PC += uint16(offset)
+
+	cpu.PC -= instructions[0x18].length
+}
 
 // LD HL,nn
 func (cpu *CPU) op21() {
@@ -68,6 +81,13 @@ func (cpu *CPU) opC3() {
 	cpu.jp(addr)
 
 	cpu.PC -= instructions[0xC3].length
+}
+
+// RET
+func (cpu *CPU) opC9() {
+	cpu.ret()
+
+	cpu.PC -= instructions[0xC9].length
 }
 
 // CALL nn
