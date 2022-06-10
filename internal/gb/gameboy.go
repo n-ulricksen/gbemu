@@ -85,6 +85,7 @@ func (gb *GameBoy) insertCartridge(romPath string) error {
 
 // initPowerUpSequence performs the DMG boot sequence, leaving the CPU ready to
 // begin executing the loaded game ROM
+// 	reference: https://gbdev.io/pandocs/Power_Up_Sequence.html
 func (gb *GameBoy) initPowerUpSequence() {
 	gb.Cpu.PC = ENTRY_POINT
 	gb.Cpu.SP = 0xFFFE
