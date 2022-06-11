@@ -24,6 +24,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x01] = instruction{"LD", 3, 3, cpu.op01}
 	instructions[0x02] = instruction{"LD", 1, 2, cpu.op02}
 	instructions[0x03] = instruction{"INC", 1, 2, cpu.op03}
+	instructions[0x05] = instruction{"DEC", 1, 1, cpu.op05}
 	instructions[0x06] = instruction{"LD", 2, 2, cpu.op06}
 	instructions[0x18] = instruction{"JR", 2, 3, cpu.op18}
 	instructions[0x20] = instruction{"JR", 2, 2, cpu.op20}
@@ -31,20 +32,30 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x23] = instruction{"INC", 1, 2, cpu.op23}
 	instructions[0x28] = instruction{"JR", 2, 2, cpu.op28}
 	instructions[0x2A] = instruction{"LD", 1, 2, cpu.op2A}
+	instructions[0x30] = instruction{"JR", 2, 2, cpu.op30}
 	instructions[0x31] = instruction{"LD", 3, 3, cpu.op31}
 	instructions[0x32] = instruction{"LD", 1, 2, cpu.op32}
+	instructions[0x36] = instruction{"LD", 2, 3, cpu.op36}
+	instructions[0x38] = instruction{"JR", 2, 2, cpu.op38}
 	instructions[0x3C] = instruction{"INC", 1, 1, cpu.op3C}
 	instructions[0x3E] = instruction{"LD", 2, 2, cpu.op3E}
 	instructions[0x5D] = instruction{"LD", 1, 1, cpu.op5D}
+	instructions[0x60] = instruction{"LD", 1, 1, cpu.op60}
+	instructions[0x66] = instruction{"LD", 1, 2, cpu.op66}
+	instructions[0x6C] = instruction{"LD", 1, 1, cpu.op6C}
+	instructions[0x6E] = instruction{"LD", 1, 2, cpu.op6E}
+	instructions[0x76] = instruction{"HALT", 1, 1, cpu.op76}
 	instructions[0x78] = instruction{"LD", 1, 1, cpu.op78}
 	instructions[0x7B] = instruction{"LD", 1, 1, cpu.op7B}
 	instructions[0x7C] = instruction{"LD", 1, 1, cpu.op7C}
 	instructions[0x7D] = instruction{"LD", 1, 1, cpu.op7D}
+	instructions[0x7E] = instruction{"LD", 1, 2, cpu.op7E}
 	instructions[0x8E] = instruction{"ADC", 1, 2, cpu.op8E}
 	instructions[0xA3] = instruction{"AND", 1, 1, cpu.opA3}
 	instructions[0xB1] = instruction{"OR", 1, 1, cpu.opB1}
 	instructions[0xC3] = instruction{"JP", 3, 4, cpu.opC3}
 	instructions[0xC5] = instruction{"PUSH", 1, 4, cpu.opC5}
+	instructions[0xC6] = instruction{"ADD", 2, 2, cpu.opC6}
 	instructions[0xC9] = instruction{"RET", 1, 4, cpu.opC9}
 	instructions[0xCD] = instruction{"CALL", 3, 6, cpu.opCD}
 	instructions[0xE0] = instruction{"LDH", 2, 3, cpu.opE0}
@@ -78,6 +89,11 @@ func (cpu *CPU) op02() {
 // INC BC
 func (cpu *CPU) op03() {
 	cpu.BC.inc()
+}
+
+// DEC B
+func (cpu *CPU) op05() {
+	cpu.dec8(&cpu.BC.hiReg)
 }
 
 // LD B,n
@@ -126,6 +142,13 @@ func (cpu *CPU) op2A() {
 	cpu.HL.inc()
 }
 
+// JR NC,e
+func (cpu *CPU) op30() {
+	offset := cpu.read(cpu.PC + 1)
+	cond := !cpu.getFlag(FLAG_C)
+	cpu.jrIf(offset, cond)
+}
+
 // LD SP,nn
 func (cpu *CPU) op31() {
 	cpu.SP = cpu.readWord(cpu.PC + 1)
@@ -138,6 +161,20 @@ func (cpu *CPU) op32() {
 	cpu.ld8(addr, data)
 
 	cpu.HL.dec()
+}
+
+// LD (HL),n
+func (cpu *CPU) op36() {
+	data := cpu.read(cpu.PC + 1)
+	addr := cpu.HL.get()
+	cpu.ld8(addr, data)
+}
+
+// JR C,e
+func (cpu *CPU) op38() {
+	offset := cpu.read(cpu.PC + 1)
+	cond := cpu.getFlag(FLAG_C)
+	cpu.jrIf(offset, cond)
 }
 
 // INC A
@@ -155,6 +192,37 @@ func (cpu *CPU) op3E() {
 func (cpu *CPU) op5D() {
 	data := cpu.HL.getLo()
 	cpu.DE.setLo(data)
+}
+
+// LD H,B
+func (cpu *CPU) op60() {
+	data := cpu.BC.getHi()
+	cpu.HL.setHi(data)
+}
+
+// LD H,(HL)
+func (cpu *CPU) op66() {
+	addr := cpu.HL.get()
+	data := cpu.read(addr)
+	cpu.HL.setHi(data)
+}
+
+// LD L,H
+func (cpu *CPU) op6C() {
+	data := cpu.HL.getHi()
+	cpu.HL.setLo(data)
+}
+
+// LD L,(HL)
+func (cpu *CPU) op6E() {
+	addr := cpu.HL.get()
+	data := cpu.read(addr)
+	cpu.HL.setLo(data)
+}
+
+// HALT
+func (cpu *CPU) op76() {
+	cpu.halted = true
 }
 
 // LD A,B
@@ -178,6 +246,13 @@ func (cpu *CPU) op7C() {
 // LD A,L
 func (cpu *CPU) op7D() {
 	data := cpu.HL.getLo()
+	cpu.AF.setHi(data)
+}
+
+// LD A,(HL)
+func (cpu *CPU) op7E() {
+	addr := cpu.HL.get()
+	data := cpu.read(addr)
 	cpu.AF.setHi(data)
 }
 
@@ -221,6 +296,12 @@ func (cpu *CPU) opC3() {
 func (cpu *CPU) opC5() {
 	data := cpu.BC.get()
 	cpu.push(data)
+}
+
+// ADD A,n
+func (cpu *CPU) opC6() {
+	data := cpu.read(cpu.PC + 1)
+	cpu.add(data)
 }
 
 // RET

@@ -10,7 +10,8 @@ type CPU struct {
 	SP uint16 // Stack pointer
 	PC uint16 // Program counter
 
-	IME bool // Interrupt master enable flag
+	IME    bool // Interrupt master enable flag
+	halted bool // Used to pause CPU execution until an interrupt occurs
 
 	bus *GameBoy // 16-bit address, 8-bit data bus
 

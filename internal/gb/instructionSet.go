@@ -29,7 +29,31 @@ func (cpu *CPU) inc8(reg *register8Bit) {
 	cpu.setFlag(FLAG_H, halfCarryOccurs(val, 1))
 }
 
-// adc performs an adition with carry on the value in register A and the given
+// dec8 decrements the given 8-big register and sets appropriate flags
+func (cpu *CPU) dec8(reg *register8Bit) {
+	val := reg.value
+	res := reg.value - 1
+	reg.value = res
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, true)
+	cpu.setFlag(FLAG_H, halfCarryOccurs(val, 0xFF))
+}
+
+// add performs an addition on the value in register A and the given value, and
+// stores the result in register A
+func (cpu *CPU) add(b byte) {
+	a := cpu.AF.getHi()
+	res := a + b
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, halfCarryOccurs(a, b))
+	cpu.setFlag(FLAG_H, a > res)
+}
+
+// adc performs an addition with carry on the value in register A and the given
 // value. The result is stored in register A.
 func (cpu *CPU) adc(add byte) {
 	carry := byte(0)
@@ -39,7 +63,6 @@ func (cpu *CPU) adc(add byte) {
 
 	a := cpu.AF.getHi()
 	res := a + add + carry
-
 	cpu.AF.setHi(res)
 
 	cpu.setFlag(FLAG_Z, res == 0)
