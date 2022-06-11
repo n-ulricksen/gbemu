@@ -10,6 +10,44 @@ func (cpu *CPU) jp(addr uint16) {
 	cpu.PC = addr
 }
 
+// jrIf performs a conditional relative jump based on the given condition
+func (cpu *CPU) jrIf(offset byte, condition bool) {
+	if condition {
+		cpu.PC += uint16(offset)
+		cpu.cycles++
+	}
+}
+
+// inc8 increments the given 8-big register and sets appropriate flags
+func (cpu *CPU) inc8(reg *register8Bit) {
+	val := reg.value
+	res := reg.value + 1
+	reg.value = res
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, halfCarryOccurs(val, 1))
+}
+
+// adc performs an adition with carry on the value in register A and the given
+// value. The result is stored in register A.
+func (cpu *CPU) adc(add byte) {
+	carry := byte(0)
+	if cpu.getFlag(FLAG_C) {
+		carry = 1
+	}
+
+	a := cpu.AF.getHi()
+	res := a + add + carry
+
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, halfCarryOccurs(a, add+carry))
+	cpu.setFlag(FLAG_C, a > res)
+}
+
 // push pushes a word of data to the stack
 func (cpu *CPU) push(data uint16) {
 	hi := byte(data >> 8)

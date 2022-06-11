@@ -50,7 +50,22 @@ func (r *register) setLo(val byte) {
 	r.loReg.value = val
 }
 
-// inc increments the value stored in the register by one
+// inc increments the 16-bit value stored in the register by one
 func (r *register) inc() {
 	r.set(r.get() + 1)
+}
+
+// dec decrements the 16-bit value stored in the register by one
+func (r *register) dec() {
+	r.set(r.get() - 1)
+}
+
+// inc increments the 8-bit value stored in the register by one
+func (r8 *register8Bit) inc() {
+	r8.value++
+}
+
+// dec decrements the 8-bit value stored in the register by one
+func (r8 *register8Bit) dec() {
+	r8.value--
 }

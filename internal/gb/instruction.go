@@ -105,20 +105,16 @@ func (cpu *CPU) op23() {
 
 // JR NZ,e
 func (cpu *CPU) op20() {
-	if !cpu.getFlag(FLAG_Z) {
-		offset := cpu.read(cpu.PC + 1)
-		cpu.PC += uint16(offset)
-		cpu.cycles++
-	}
+	offset := cpu.read(cpu.PC + 1)
+	cond := !cpu.getFlag(FLAG_Z)
+	cpu.jrIf(offset, cond)
 }
 
 // JR Z,e
 func (cpu *CPU) op28() {
-	if cpu.getFlag(FLAG_Z) {
-		offset := cpu.read(cpu.PC + 1)
-		cpu.PC += uint16(offset)
-		cpu.cycles++
-	}
+	offset := cpu.read(cpu.PC + 1)
+	cond := cpu.getFlag(FLAG_Z)
+	cpu.jrIf(offset, cond)
 }
 
 // LD A,(HL+)
@@ -146,13 +142,7 @@ func (cpu *CPU) op32() {
 
 // INC A
 func (cpu *CPU) op3C() {
-	af := cpu.AF.getHi()
-	res := af + 1
-	cpu.AF.setHi(res)
-
-	cpu.setFlag(FLAG_Z, res == 0)
-	cpu.setFlag(FLAG_N, false)
-	cpu.setFlag(FLAG_H, halfCarryOccurs(af, 1))
+	cpu.inc8(&cpu.AF.hiReg)
 }
 
 // LD A,n
@@ -193,19 +183,8 @@ func (cpu *CPU) op7D() {
 
 // ADC A,(HL)
 func (cpu *CPU) op8E() {
-	carry := byte(0)
-	if cpu.getFlag(FLAG_C) {
-		carry = 1
-	}
-
-	add1 := cpu.read(cpu.HL.get()) + carry
-	add2 := cpu.AF.getHi()
-	res := add1 + add2
-
-	cpu.setFlag(FLAG_Z, res == 0)
-	cpu.setFlag(FLAG_N, false)
-	cpu.setFlag(FLAG_H, halfCarryOccurs(add1, add2))
-	cpu.setFlag(FLAG_C, add1 > res)
+	add := cpu.read(cpu.HL.get())
+	cpu.adc(add)
 }
 
 // AND E
