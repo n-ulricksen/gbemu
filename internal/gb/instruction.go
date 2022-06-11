@@ -25,9 +25,9 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x02] = instruction{"LD", 1, 2, cpu.op02}
 	instructions[0x03] = instruction{"INC", 1, 2, cpu.op03}
 	instructions[0x18] = instruction{"JR", 2, 3, cpu.op18}
+	instructions[0x20] = instruction{"JR", 2, 2, cpu.op20}
 	instructions[0x21] = instruction{"LD", 3, 3, cpu.op21}
 	instructions[0x23] = instruction{"INC", 1, 2, cpu.op23}
-	instructions[0x20] = instruction{"JR", 2, 2, cpu.op20}
 	instructions[0x28] = instruction{"JR", 2, 2, cpu.op28}
 	instructions[0x2A] = instruction{"LD", 1, 2, cpu.op2A}
 	instructions[0x31] = instruction{"LD", 3, 3, cpu.op31}
