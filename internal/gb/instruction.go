@@ -27,6 +27,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x05] = instruction{"DEC", 1, 1, cpu.op05}
 	instructions[0x06] = instruction{"LD", 2, 2, cpu.op06}
 	instructions[0x18] = instruction{"JR", 2, 3, cpu.op18}
+	instructions[0x1C] = instruction{"INC", 1, 1, cpu.op1C}
 	instructions[0x20] = instruction{"JR", 2, 2, cpu.op20}
 	instructions[0x21] = instruction{"LD", 3, 3, cpu.op21}
 	instructions[0x23] = instruction{"INC", 1, 2, cpu.op23}
@@ -58,10 +59,12 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0xC6] = instruction{"ADD", 2, 2, cpu.opC6}
 	instructions[0xC9] = instruction{"RET", 1, 4, cpu.opC9}
 	instructions[0xCD] = instruction{"CALL", 3, 6, cpu.opCD}
+	instructions[0xD6] = instruction{"SUB", 2, 2, cpu.opD6}
 	instructions[0xE0] = instruction{"LDH", 2, 3, cpu.opE0}
 	instructions[0xE1] = instruction{"POP", 1, 3, cpu.opE1}
 	instructions[0xE5] = instruction{"PUSH", 1, 4, cpu.opE5}
 	instructions[0xEA] = instruction{"LD", 3, 4, cpu.opEA}
+	instructions[0xEE] = instruction{"XOR", 2, 2, cpu.opEE}
 	instructions[0xF0] = instruction{"LDH", 2, 3, cpu.opF0}
 	instructions[0xF1] = instruction{"POP", 1, 3, cpu.opF1}
 	instructions[0xF3] = instruction{"DI", 1, 1, cpu.opF3}
@@ -106,6 +109,11 @@ func (cpu *CPU) op06() {
 func (cpu *CPU) op18() {
 	offset := cpu.read(cpu.PC + 1)
 	cpu.PC += uint16(offset)
+}
+
+// INC E
+func (cpu *CPU) op1C() {
+	cpu.inc8(&cpu.DE.loReg)
 }
 
 // LD HL,nn
@@ -319,6 +327,12 @@ func (cpu *CPU) opCD() {
 	cpu.PC -= instructions[0xCD].length
 }
 
+// SUB n
+func (cpu *CPU) opD6() {
+	data := cpu.read(cpu.PC + 1)
+	cpu.sub(data)
+}
+
 // LDH (n),A
 func (cpu *CPU) opE0() {
 	lo := cpu.read(cpu.PC + 1)
@@ -344,6 +358,12 @@ func (cpu *CPU) opEA() {
 	addr := cpu.readWord(cpu.PC + 1)
 	data := cpu.AF.getHi()
 	cpu.ld8(addr, data)
+}
+
+// XOR n
+func (cpu *CPU) opEE() {
+	n := cpu.read(cpu.PC + 1)
+	cpu.xor(n)
 }
 
 // LDH A,(n)

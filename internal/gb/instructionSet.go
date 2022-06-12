@@ -53,6 +53,19 @@ func (cpu *CPU) add(b byte) {
 	cpu.setFlag(FLAG_C, a > res)
 }
 
+// sub sutracts the given value from the value in register A, and stores the
+// result in register A
+func (cpu *CPU) sub(b byte) {
+	a := cpu.AF.getHi()
+	res := a - b
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, true)
+	cpu.setFlag(FLAG_H, halfCarryOccurs(a, -b))
+	cpu.setFlag(FLAG_C, a > res)
+}
+
 // adc performs an addition with carry on the value in register A and the given
 // value, and stores the result in register A
 func (cpu *CPU) adc(add byte) {
@@ -69,6 +82,32 @@ func (cpu *CPU) adc(add byte) {
 	cpu.setFlag(FLAG_N, false)
 	cpu.setFlag(FLAG_H, halfCarryOccurs(a, add+carry))
 	cpu.setFlag(FLAG_C, a > res)
+}
+
+// or performs a bitwise or on the value in register A and the given value,
+// and stores the result in register A
+func (cpu *CPU) or(b byte) {
+	a := cpu.AF.getHi()
+	res := a | b
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, false)
+}
+
+// xor performs a bitwise xor on the value in register A and the given value,
+// and stores the result in register A
+func (cpu *CPU) xor(b byte) {
+	a := cpu.AF.getHi()
+	res := a ^ b
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, false)
 }
 
 // push pushes a word of data to the stack

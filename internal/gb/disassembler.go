@@ -54,6 +54,9 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		case 0x18:
 			// JR e
 			msg += fmt.Sprintf("0x%02X", op1)
+		case 0x1C:
+			// INC E
+			msg += "E"
 		case 0x20:
 			// JR NZ,e
 			msg += fmt.Sprintf("NZ,0x%02X", op1)
@@ -145,6 +148,9 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		case 0xCD:
 			// CALL nn
 			msg += fmt.Sprintf("(0x%04X)", word)
+		case 0xD6:
+			// SUB n
+			msg += fmt.Sprintf("0x%02X", op1)
 		case 0xE0:
 			// LDH (n),A
 			msg += fmt.Sprintf("(0xFF%02X),A", op1)
@@ -157,6 +163,9 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		case 0xEA:
 			// LD (nn),A
 			msg += fmt.Sprintf("(0x%04X),A", word)
+		case 0xEE:
+			// XOR n
+			msg += fmt.Sprintf("0x%02X", op1)
 		case 0xF0:
 			// LDH A,(n)
 			msg += fmt.Sprintf("A,(0xFF%02X)", op1)
