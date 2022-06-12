@@ -54,7 +54,7 @@ func (cpu *CPU) add(b byte) {
 }
 
 // adc performs an addition with carry on the value in register A and the given
-// value. The result is stored in register A.
+// value, and stores the result in register A
 func (cpu *CPU) adc(add byte) {
 	carry := byte(0)
 	if cpu.getFlag(FLAG_C) {
