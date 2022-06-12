@@ -50,7 +50,7 @@ func (cpu *CPU) add(b byte) {
 	cpu.setFlag(FLAG_Z, res == 0)
 	cpu.setFlag(FLAG_N, false)
 	cpu.setFlag(FLAG_H, halfCarryOccurs(a, b))
-	cpu.setFlag(FLAG_H, a > res)
+	cpu.setFlag(FLAG_C, a > res)
 }
 
 // adc performs an addition with carry on the value in register A and the given
