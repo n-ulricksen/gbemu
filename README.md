@@ -1,4 +1,4 @@
-# Nintendo Gameboy Emulator
+# Nintendo Game Boy Emulator
 
 ### Built with
 - [Go](https://go.dev/)
