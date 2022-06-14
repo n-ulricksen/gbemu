@@ -110,6 +110,19 @@ func (cpu *CPU) xor(b byte) {
 	cpu.setFlag(FLAG_C, false)
 }
 
+// rlca rotates A left 1 bit with wrapping, leaving the previous MSB in the LSB
+// position
+func (cpu *CPU) rlca() {
+	a := cpu.AF.getHi()
+	res := (a << 1) | (a >> 7)
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_Z, false)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, (a>>7) > 0)
+}
+
 // push pushes a word of data to the stack
 func (cpu *CPU) push(data uint16) {
 	hi := byte(data >> 8)

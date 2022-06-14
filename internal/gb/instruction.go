@@ -26,6 +26,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x03] = instruction{"INC", 1, 2, cpu.op03}
 	instructions[0x05] = instruction{"DEC", 1, 1, cpu.op05}
 	instructions[0x06] = instruction{"LD", 2, 2, cpu.op06}
+	instructions[0x07] = instruction{"RLCA", 1, 1, cpu.op07}
 	instructions[0x18] = instruction{"JR", 2, 3, cpu.op18}
 	instructions[0x1C] = instruction{"INC", 1, 1, cpu.op1C}
 	instructions[0x20] = instruction{"JR", 2, 2, cpu.op20}
@@ -103,6 +104,11 @@ func (cpu *CPU) op05() {
 func (cpu *CPU) op06() {
 	data := cpu.read(cpu.PC + 1)
 	cpu.BC.setHi(data)
+}
+
+// RLCA
+func (cpu *CPU) op07() {
+	cpu.rlca()
 }
 
 // JR e
