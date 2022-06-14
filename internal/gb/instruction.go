@@ -279,13 +279,8 @@ func (cpu *CPU) op8E() {
 
 // AND E
 func (cpu *CPU) opA3() {
-	res := cpu.AF.getHi() & cpu.DE.getLo()
-	cpu.AF.setHi(res)
-
-	cpu.setFlag(FLAG_Z, res == 0)
-	cpu.setFlag(FLAG_N, false)
-	cpu.setFlag(FLAG_H, true)
-	cpu.setFlag(FLAG_C, false)
+	e := cpu.DE.getLo()
+	cpu.and(e)
 }
 
 // OR C

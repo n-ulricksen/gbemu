@@ -84,6 +84,19 @@ func (cpu *CPU) adc(add byte) {
 	cpu.setFlag(FLAG_C, a > res)
 }
 
+// and performs a bitwise and on the value in register A and the given value,
+// and stores the result in register A
+func (cpu *CPU) and(b byte) {
+	a := cpu.AF.getHi()
+	res := a & b
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, true)
+	cpu.setFlag(FLAG_C, false)
+}
+
 // or performs a bitwise or on the value in register A and the given value,
 // and stores the result in register A
 func (cpu *CPU) or(b byte) {
