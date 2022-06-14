@@ -136,6 +136,55 @@ func (cpu *CPU) rlca() {
 	cpu.setFlag(FLAG_C, (a>>7) > 0)
 }
 
+// rla rotates A left 1 bit through the carry flag with wrapping, leaving the
+// previous carry bit in the LSB, and the previous MSB in the carry flag
+func (cpu *CPU) rla() {
+	a := cpu.AF.getHi()
+	carry := byte(0)
+	if cpu.getFlag(FLAG_C) {
+		carry = 1
+	}
+
+	res := (a << 1) | carry
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_Z, false)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, (a>>7) > 0)
+}
+
+// rrca rotates A right 1 bit with wrapping, leaving the previous LSB in the
+// MSB position
+func (cpu *CPU) rrca() {
+	a := cpu.AF.getHi()
+	res := ((a & 0x1) << 7) | (a >> 1)
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_Z, false)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, (a&0x1) > 0)
+}
+
+// rra rotates A right 1 bit through the carry flag with wrapping, leaving the
+// previous carry bit in the MSB, and the previous LSB in the carry flag
+func (cpu *CPU) rra() {
+	a := cpu.AF.getHi()
+	carry := byte(0)
+	if cpu.getFlag(FLAG_C) {
+		carry = 1
+	}
+
+	res := (carry << 7) | (a >> 1)
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_Z, false)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, (a&0x1) > 0)
+}
+
 // push pushes a word of data to the stack
 func (cpu *CPU) push(data uint16) {
 	hi := byte(data >> 8)
@@ -160,6 +209,14 @@ func (cpu *CPU) call(addr uint16) {
 // ret unconditionally returns from a function
 func (cpu *CPU) ret() {
 	cpu.PC = cpu.pop()
+}
+
+// retIf returns from a function if the given condtion is true
+func (cpu *CPU) retIf(condition bool) {
+	if condition {
+		cpu.ret()
+		cpu.cycles += 3
+	}
 }
 
 // di disables interrupt handling
