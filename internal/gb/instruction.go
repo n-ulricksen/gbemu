@@ -55,6 +55,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x8E] = instruction{"ADC", 1, 2, cpu.op8E}
 	instructions[0xA3] = instruction{"AND", 1, 1, cpu.opA3}
 	instructions[0xB1] = instruction{"OR", 1, 1, cpu.opB1}
+	instructions[0xB7] = instruction{"OR", 1, 1, cpu.opB7}
 	instructions[0xC3] = instruction{"JP", 3, 4, cpu.opC3}
 	instructions[0xC5] = instruction{"PUSH", 1, 4, cpu.opC5}
 	instructions[0xC6] = instruction{"ADD", 2, 2, cpu.opC6}
@@ -289,13 +290,14 @@ func (cpu *CPU) opA3() {
 
 // OR C
 func (cpu *CPU) opB1() {
-	res := cpu.AF.getHi() | cpu.BC.getLo()
-	cpu.AF.setHi(res)
+	c := cpu.BC.getLo()
+	cpu.or(c)
+}
 
-	cpu.setFlag(FLAG_Z, res == 0)
-	cpu.setFlag(FLAG_N, false)
-	cpu.setFlag(FLAG_H, false)
-	cpu.setFlag(FLAG_C, false)
+// OR A
+func (cpu *CPU) opB7() {
+	a := cpu.AF.getHi()
+	cpu.or(a)
 }
 
 // JP nn
