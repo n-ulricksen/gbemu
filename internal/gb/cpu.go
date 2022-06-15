@@ -27,6 +27,7 @@ func newCPU() *CPU {
 		HL: register{name: "HL", hiReg: newReg8Bit("H"), loReg: newReg8Bit("L")},
 	}
 	cpu.setupInstructionLookup()
+	cpu.setupPfInstructionLookup()
 
 	return cpu
 }
