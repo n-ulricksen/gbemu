@@ -15,8 +15,7 @@ const INSTRUCTION_COUNT = 0x100
 
 // instruction lookup arrays, used by the CPU during the decode stage
 var (
-	instructions   = [INSTRUCTION_COUNT]inst{}
-	pfInstructions = [INSTRUCTION_COUNT]inst{} // prefixed $CB
+	instructions = [INSTRUCTION_COUNT]inst{}
 )
 
 // setupInstuctionLookup defines all legal CPU instructions for the instruction
@@ -70,7 +69,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0xC5] = inst{"PUSH", 1, 4, cpu.opC5}
 	instructions[0xC6] = inst{"ADD", 2, 2, cpu.opC6}
 	instructions[0xC9] = inst{"RET", 1, 4, cpu.opC9}
-	instructions[0xCB] = inst{"", 0, 0, cpu.opCB} // prefix 0xCB
+	instructions[0xCB] = inst{"", 2, 2, cpu.opCB} // prefix 0xCB
 	instructions[0xCD] = inst{"CALL", 3, 6, cpu.opCD}
 	instructions[0xCE] = inst{"ADC", 2, 2, cpu.opCE}
 	instructions[0xD0] = inst{"RET", 1, 2, cpu.opD0}
@@ -88,21 +87,6 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0xF5] = inst{"PUSH", 1, 4, cpu.opF5}
 	instructions[0xFE] = inst{"CP", 2, 2, cpu.opFE}
 	instructions[0xFF] = inst{"RST", 1, 4, cpu.opFF}
-}
-
-// setupInstuctionLookup defines all legal CPU instructions prefixed with 0xCB
-func (cpu *CPU) setupPfInstructionLookup() {
-	pfinstructions[0xFF] = inst{"SET", 2, 2, func() { cpu.set(7, &cpu.AF.hiReg) }}
-
-	// log.Fatal on unimplemented opcodes development
-	for i, inst := range pfInstructions {
-		if inst.exec == nil {
-			pfInstructions[i].exec = func() {
-				op := byte(i)
-				cpu.bus.logger.Fatalf("unimplemented op: CB %02X %#08b\n", op, op)
-			}
-		}
-	}
 }
 
 // NOP
@@ -404,8 +388,95 @@ func (cpu *CPU) opC9() {
 
 // Prefix instructions
 func (cpu *CPU) opCB() {
-	b := cpu.read(cpu.PC + 1)
-	pfInstructions[b].exec()
+	op := cpu.read(cpu.PC + 1)
+
+	// Determine register
+	// The registers used in these instructions are determined by the LSB of
+	// opcode as follows:
+	//
+	// LSB: 0 1 2 3 4 5  6   7
+	// reg: B C D E H L (HL) A
+	//
+	// This pattern repeats for opcodes with LSB 8 through F (x8-xF).
+	var reg *byte
+	switch op % 8 {
+	case 0x0:
+		reg = &cpu.BC.hiReg.value
+	case 0x1:
+		reg = &cpu.BC.loReg.value
+	case 0x2:
+		reg = &cpu.DE.hiReg.value
+	case 0x3:
+		reg = &cpu.DE.loReg.value
+	case 0x4:
+		reg = &cpu.HL.hiReg.value
+	case 0x5:
+		reg = &cpu.HL.loReg.value
+	case 0x6:
+		addr := cpu.HL.get()
+		cpu.cycles++
+		reg = &cpu.bus.CartRom[addr]
+	case 0x7:
+		reg = &cpu.AF.hiReg.value
+	}
+
+	// Determine bit/instruction, execute instruction
+	if op <= 0x3F {
+		// Determine instruction
+		// For all opcodes <= 0x3F, a different CPU instruction is used for
+		// each set of 8 consecutive opcodes (e.g.: 0x00-0x07, 0x18-0x1F)
+		switch op / 8 {
+		case 0:
+			// RLC
+			cpu.rlc(reg)
+		case 1:
+			// RRC
+			cpu.rrc(reg)
+		case 2:
+			// RL
+			cpu.rl(reg)
+		case 3:
+			// RR
+			cpu.rr(reg)
+		case 4:
+			// SLA
+			cpu.sla(reg)
+		case 5:
+			// SRA
+			cpu.sra(reg)
+		case 6:
+			// SWAP
+			cpu.swap(reg)
+		case 7:
+			// SRL
+			cpu.srl(reg)
+		}
+	} else {
+		// Determine bit
+		//
+		// Every $CB-prefixed instruction of opcode >= 0x40 operates on a
+		// certain bit of the specified data. Opcodes 0x40-0x47 each operate on
+		// bit 0. The next 8 opcodes operate on bit 1, and so on for all bits 0-7.
+		// This pattern repeats a total of 3 times through 0x40 and 0xFF.
+		//
+		// 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1
+		// 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3
+		// 4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5
+		// 6 6 6 6 6 6 6 6 7 7 7 7 7 7 7 7
+		bit := int((op / 8) % 8)
+
+		// Determine instruction
+		if op >= 0x40 && op <= 0x7F {
+			// BIT
+			cpu.bit(bit, reg)
+		} else if op >= 0x80 && op <= 0xBF {
+			// RES
+			cpu.res(bit, reg)
+		} else if op >= 0xC0 && op <= 0xFF {
+			// SET
+			cpu.set(bit, reg)
+		}
+	}
 }
 
 // CALL nn

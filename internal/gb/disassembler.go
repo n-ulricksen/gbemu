@@ -8,6 +8,8 @@ const lineTemplate string = "[%#04x]:\t%s\t%s "
 
 // disassemble disassembles the system's loaded cartridge ROM between addresses
 // 'start' and 'end', and stores the result in the 'gb.disassembly'
+//
+// see 'instruction.go' or https://gbdev.io/gb-opcodes/optables/ for details
 func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 	if int(end) >= len(gb.CartRom) {
 		return errAddrOutOfRange
@@ -29,6 +31,11 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		}
 		if inst.length > 2 {
 			opString += fmt.Sprintf(" %02X", op2)
+		}
+
+		if op == 0xCB {
+			// Prefix instruction
+			inst.name = getPrefixInstructionName(op1)
 		}
 
 		msg := fmt.Sprintf(lineTemplate, addr, opString, inst.name)
@@ -170,6 +177,37 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 			msg += fmt.Sprintf("A,0x%02X", op1)
 		case 0xC9:
 			// RET
+		case 0xCB:
+			// Prefix instructions
+			var reg string
+			switch op1 % 8 {
+			case 0:
+				reg = "B"
+			case 1:
+				reg = "C"
+			case 2:
+				reg = "D"
+			case 3:
+				reg = "E"
+			case 4:
+				reg = "H"
+			case 5:
+				reg = "L"
+			case 6:
+				reg = "(HL)"
+			case 7:
+				reg = "A"
+			}
+
+			if op1 <= 0x3F {
+				msg += fmt.Sprintf("%s", reg)
+			} else {
+				// Determine bit
+				b := int((op1 / 8) % 8)
+				bit := fmt.Sprintf("%d", b)
+
+				msg += fmt.Sprintf("%s,%s", bit, reg)
+			}
 		case 0xCD:
 			// CALL nn
 			msg += fmt.Sprintf("(0x%04X)", word)
@@ -232,4 +270,39 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 
 	gb.disassembly = disassembly
 	return nil
+}
+
+func getPrefixInstructionName(op byte) string {
+	var name string
+
+	if op <= 0x3F {
+		switch op / 8 {
+		case 0:
+			name = "RLC"
+		case 1:
+			name = "RRC"
+		case 2:
+			name = "RL"
+		case 3:
+			name = "RR"
+		case 4:
+			name = "SLA"
+		case 5:
+			name = "SRA"
+		case 6:
+			name = "SWAP"
+		case 7:
+			name = "SRL"
+		}
+	} else {
+		if op >= 0x40 && op <= 0x7F {
+			name = "BIT"
+		} else if op >= 0x80 && op <= 0xBF {
+			name = "RES"
+		} else if op >= 0xC0 && op <= 0xFF {
+			name = "SET"
+		}
+	}
+
+	return name
 }

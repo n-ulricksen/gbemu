@@ -185,6 +185,132 @@ func (cpu *CPU) rra() {
 	cpu.setFlag(FLAG_C, (a&0x1) > 0)
 }
 
+// rlc rotates the given data left 1 bit with wrapping, leaving the previous
+// MSB in the LSB position
+func (cpu *CPU) rlc(data *byte) {
+	d := *data
+	res := (d << 1) | (d >> 7)
+	*data = res
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, (d>>7) > 0)
+}
+
+// rl rotates the given data left 1 bit through the carry flag with wrapping,
+// leaving the previous carry bit in the LSB, and the previous MSB in the carry
+// flag
+func (cpu *CPU) rl(data *byte) {
+	d := *data
+	carry := byte(0)
+	if cpu.getFlag(FLAG_C) {
+		carry = 1
+	}
+
+	res := (d << 1) | carry
+	*data = res
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, (d>>7) > 0)
+}
+
+// rrc rotates the given data right 1 bit with wrapping, leaving the previous
+// LSB in the MSB position
+func (cpu *CPU) rrc(data *byte) {
+	d := *data
+	res := ((d & 0x1) << 7) | (d >> 1)
+	*data = res
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, (d&0x1) > 0)
+}
+
+// rr rotates the given data right 1 bit through the carry flag with wrapping,
+// leaving the previous carry bit in the MSB, and the previous LSB in the carry
+// flag
+func (cpu *CPU) rr(data *byte) {
+	d := *data
+	carry := byte(0)
+	if cpu.getFlag(FLAG_C) {
+		carry = 1
+	}
+
+	res := (carry << 7) | (d >> 1)
+	*data = res
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, (d&0x1) > 0)
+}
+
+// sla performs an arithmetic left shift on the given data
+func (cpu *CPU) sla(data *byte) {
+	res := *data << 1
+	carry := *data&(0x1<<7) > 0
+	*data = res
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, carry)
+}
+
+// sra performs an arithmetic right shift on the given data
+func (cpu *CPU) sra(data *byte) {
+	msb := *data & (0x1 << 7)
+	res := msb | (*data >> 1)
+	carry := *data&(0x1) > 0
+	*data = res
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, carry)
+}
+
+// sra performs a logical right shift on the given data
+func (cpu *CPU) srl(data *byte) {
+	res := *data >> 1
+	carry := *data&(0x1) > 0
+	*data = res
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, false)
+	cpu.setFlag(FLAG_C, carry)
+}
+
+// swap exchanges the low and high nibble of the given byte
+func (cpu *CPU) swap(data *byte) {
+	hi := *data & 0xF0
+	lo := *data & 0x0F
+	*data = (lo << 4) | (hi >> 4)
+}
+
+// bit tests bit 'b', setting the zero flag if the bit is 0
+func (cpu *CPU) bit(b int, data *byte) {
+	z := (*data & (1 << b)) == 0
+	cpu.setFlag(FLAG_Z, z)
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, true)
+}
+
+// res resets (clears) a bit 'b' in the given data
+func (cpu *CPU) res(b int, data *byte) {
+	*data &^= (1 << b)
+}
+
+// set sets a bit 'b' to 1 in the given data
+func (cpu *CPU) set(b int, data *byte) {
+	*data &= (1 << b)
+}
+
 // push pushes a word of data to the stack
 func (cpu *CPU) push(data uint16) {
 	hi := byte(data >> 8)
