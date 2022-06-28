@@ -274,7 +274,7 @@ func (cpu *CPU) sra(data *byte) {
 	cpu.setFlag(FLAG_C, carry)
 }
 
-// sra performs a logical right shift on the given data
+// srl performs a logical right shift on the given data
 func (cpu *CPU) srl(data *byte) {
 	res := *data >> 1
 	carry := *data&(0x1) > 0
