@@ -34,6 +34,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x20] = inst{"JR", 2, 2, cpu.op20}
 	instructions[0x21] = inst{"LD", 3, 3, cpu.op21}
 	instructions[0x23] = inst{"INC", 1, 2, cpu.op23}
+	instructions[0x25] = inst{"DEC", 1, 1, cpu.op25}
 	instructions[0x26] = inst{"LD", 2, 2, cpu.op26}
 	instructions[0x28] = inst{"JR", 2, 2, cpu.op28}
 	instructions[0x2A] = inst{"LD", 1, 2, cpu.op2A}
@@ -47,15 +48,24 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x3D] = inst{"DEC", 1, 1, cpu.op3D}
 	instructions[0x3E] = inst{"LD", 2, 2, cpu.op3E}
 	instructions[0x46] = inst{"LD", 1, 2, cpu.op46}
+	instructions[0x47] = inst{"LD", 1, 1, cpu.op47}
 	instructions[0x4E] = inst{"LD", 1, 2, cpu.op4E}
+	instructions[0x4F] = inst{"LD", 1, 1, cpu.op4F}
 	instructions[0x56] = inst{"LD", 1, 2, cpu.op56}
+	instructions[0x57] = inst{"LD", 1, 1, cpu.op57}
 	instructions[0x5D] = inst{"LD", 1, 1, cpu.op5D}
+	instructions[0x5F] = inst{"LD", 1, 1, cpu.op5F}
 	instructions[0x60] = inst{"LD", 1, 1, cpu.op60}
+	instructions[0x63] = inst{"LD", 1, 1, cpu.op63}
 	instructions[0x66] = inst{"LD", 1, 2, cpu.op66}
 	instructions[0x6C] = inst{"LD", 1, 1, cpu.op6C}
 	instructions[0x6E] = inst{"LD", 1, 2, cpu.op6E}
+	instructions[0x70] = inst{"LD", 1, 2, cpu.op70}
+	instructions[0x75] = inst{"LD", 1, 2, cpu.op75}
 	instructions[0x76] = inst{"HALT", 1, 1, cpu.op76}
 	instructions[0x78] = inst{"LD", 1, 1, cpu.op78}
+	instructions[0x79] = inst{"LD", 1, 1, cpu.op79}
+	instructions[0x7A] = inst{"LD", 1, 1, cpu.op7A}
 	instructions[0x7B] = inst{"LD", 1, 1, cpu.op7B}
 	instructions[0x7C] = inst{"LD", 1, 1, cpu.op7C}
 	instructions[0x7D] = inst{"LD", 1, 1, cpu.op7D}
@@ -160,6 +170,11 @@ func (cpu *CPU) op23() {
 	cpu.HL.inc()
 }
 
+// DEC H
+func (cpu *CPU) op25() {
+	cpu.dec8(&cpu.HL.hiReg)
+}
+
 // LD H,n
 func (cpu *CPU) op26() {
 	data := cpu.read(cpu.PC + 1)
@@ -245,10 +260,22 @@ func (cpu *CPU) op46() {
 	cpu.BC.setHi(data)
 }
 
+// LD B,A
+func (cpu *CPU) op47() {
+	data := cpu.AF.getHi()
+	cpu.BC.setHi(data)
+}
+
 // LD C,(HL)
 func (cpu *CPU) op4E() {
 	addr := cpu.HL.get()
 	data := cpu.read(addr)
+	cpu.BC.setLo(data)
+}
+
+// LD C,A
+func (cpu *CPU) op4F() {
+	data := cpu.AF.getHi()
 	cpu.BC.setLo(data)
 }
 
@@ -259,15 +286,33 @@ func (cpu *CPU) op56() {
 	cpu.DE.setHi(data)
 }
 
+// LD D,A
+func (cpu *CPU) op57() {
+	data := cpu.AF.getHi()
+	cpu.DE.setHi(data)
+}
+
 // LD E,L
 func (cpu *CPU) op5D() {
 	data := cpu.HL.getLo()
 	cpu.DE.setLo(data)
 }
 
+// LD E,A
+func (cpu *CPU) op5F() {
+	data := cpu.AF.getHi()
+	cpu.DE.setLo(data)
+}
+
 // LD H,B
 func (cpu *CPU) op60() {
 	data := cpu.BC.getHi()
+	cpu.HL.setHi(data)
+}
+
+// LD H,E
+func (cpu *CPU) op63() {
+	data := cpu.DE.getLo()
 	cpu.HL.setHi(data)
 }
 
@@ -291,6 +336,20 @@ func (cpu *CPU) op6E() {
 	cpu.HL.setLo(data)
 }
 
+// LD (HL),B
+func (cpu *CPU) op70() {
+	addr := cpu.HL.get()
+	data := cpu.BC.getHi()
+	cpu.ld8(addr, data)
+}
+
+// LD (HL),L
+func (cpu *CPU) op75() {
+	addr := cpu.HL.get()
+	data := cpu.HL.getLo()
+	cpu.ld8(addr, data)
+}
+
 // HALT
 func (cpu *CPU) op76() {
 	cpu.halted = true
@@ -299,6 +358,18 @@ func (cpu *CPU) op76() {
 // LD A,B
 func (cpu *CPU) op78() {
 	data := cpu.BC.getHi()
+	cpu.AF.setHi(data)
+}
+
+// LD A,C
+func (cpu *CPU) op79() {
+	data := cpu.BC.getLo()
+	cpu.AF.setHi(data)
+}
+
+// LD A,D
+func (cpu *CPU) op7A() {
+	data := cpu.DE.getHi()
 	cpu.AF.setHi(data)
 }
 
