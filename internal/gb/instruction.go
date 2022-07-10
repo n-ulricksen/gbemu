@@ -30,6 +30,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x07] = inst{"RLCA", 1, 1, cpu.op07}
 	instructions[0x0A] = inst{"LD", 1, 2, cpu.op0A}
 	instructions[0x0E] = inst{"LD", 2, 2, cpu.op0E}
+	instructions[0x0F] = inst{"RRCA", 1, 1, cpu.op0F}
 	instructions[0x10] = inst{"STOP", 2, 1, cpu.op10}
 	instructions[0x11] = inst{"LD", 3, 3, cpu.op11}
 	instructions[0x12] = inst{"LD", 1, 2, cpu.op12}
@@ -94,20 +95,24 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0xB1] = inst{"OR", 1, 1, cpu.opB1}
 	instructions[0xB7] = inst{"OR", 1, 1, cpu.opB7}
 	instructions[0xC0] = inst{"RET", 1, 2, cpu.opC0}
+	instructions[0xC1] = inst{"POP", 1, 3, cpu.opC1}
 	instructions[0xC3] = inst{"JP", 3, 4, cpu.opC3}
 	instructions[0xC5] = inst{"PUSH", 1, 4, cpu.opC5}
 	instructions[0xC6] = inst{"ADD", 2, 2, cpu.opC6}
+	instructions[0xC8] = inst{"RET", 1, 2, cpu.opC8}
 	instructions[0xC9] = inst{"RET", 1, 4, cpu.opC9}
 	instructions[0xCB] = inst{"", 2, 2, cpu.opCB} // prefix 0xCB
 	instructions[0xCD] = inst{"CALL", 3, 6, cpu.opCD}
 	instructions[0xCE] = inst{"ADC", 2, 2, cpu.opCE}
 	instructions[0xD0] = inst{"RET", 1, 2, cpu.opD0}
 	instructions[0xD1] = inst{"POP", 1, 3, cpu.opD1}
+	instructions[0xD2] = inst{"JP", 3, 3, cpu.opD2}
 	instructions[0xD5] = inst{"PUSH", 1, 4, cpu.opD5}
 	instructions[0xD6] = inst{"SUB", 2, 2, cpu.opD6}
 	instructions[0xE0] = inst{"LDH", 2, 3, cpu.opE0}
 	instructions[0xE1] = inst{"POP", 1, 3, cpu.opE1}
 	instructions[0xE5] = inst{"PUSH", 1, 4, cpu.opE5}
+	instructions[0xE6] = inst{"AND", 2, 2, cpu.opE6}
 	instructions[0xEA] = inst{"LD", 3, 4, cpu.opEA}
 	instructions[0xEE] = inst{"XOR", 2, 2, cpu.opEE}
 	instructions[0xF0] = inst{"LDH", 2, 3, cpu.opF0}
@@ -118,6 +123,9 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0xFA] = inst{"LD", 3, 4, cpu.opFA}
 	instructions[0xFE] = inst{"CP", 2, 2, cpu.opFE}
 	instructions[0xFF] = inst{"RST", 1, 4, cpu.opFF}
+
+	// Illegal codes
+	instructions[0xE3] = inst{"XXX", 1, 1, cpu.nop}
 }
 
 // NOP
@@ -168,6 +176,11 @@ func (cpu *CPU) op0A() {
 func (cpu *CPU) op0E() {
 	data := cpu.read(cpu.PC + 1)
 	cpu.BC.setLo(data)
+}
+
+// RRCA
+func (cpu *CPU) op0F() {
+	cpu.rrca()
 }
 
 // STOP n
@@ -576,6 +589,12 @@ func (cpu *CPU) opC0() {
 	cpu.PC -= instructions[0xC0].length
 }
 
+// POP BC
+func (cpu *CPU) opC1() {
+	data := cpu.pop()
+	cpu.BC.set(data)
+}
+
 // JP nn
 func (cpu *CPU) opC3() {
 	addr := cpu.readWord(cpu.PC + 1)
@@ -594,6 +613,14 @@ func (cpu *CPU) opC5() {
 func (cpu *CPU) opC6() {
 	data := cpu.read(cpu.PC + 1)
 	cpu.add(data)
+}
+
+// RET Z
+func (cpu *CPU) opC8() {
+	cond := cpu.getFlag(FLAG_Z)
+	cpu.retIf(cond)
+
+	cpu.PC -= instructions[0xC8].length
 }
 
 // RET
@@ -724,6 +751,16 @@ func (cpu *CPU) opD1() {
 	cpu.DE.set(data)
 }
 
+// JP NC,nn
+func (cpu *CPU) opD2() {
+	nn := cpu.readWord(cpu.PC + 1)
+	cond := !cpu.getFlag(FLAG_C)
+
+	cpu.jpIf(nn, cond)
+
+	cpu.PC -= instructions[0xD2].length
+}
+
 // PUSH DE
 func (cpu *CPU) opD5() {
 	data := cpu.DE.get()
@@ -754,6 +791,12 @@ func (cpu *CPU) opE1() {
 func (cpu *CPU) opE5() {
 	data := cpu.HL.get()
 	cpu.push(data)
+}
+
+// AND n
+func (cpu *CPU) opE6() {
+	n := cpu.read(cpu.PC + 1)
+	cpu.and(n)
 }
 
 // LD (nn),A

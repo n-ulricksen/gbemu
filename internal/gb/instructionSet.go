@@ -10,6 +10,15 @@ func (cpu *CPU) jp(addr uint16) {
 	cpu.PC = addr
 }
 
+// jpIf performs a conditional absolute jump to the given address based on the
+// given condition
+func (cpu *CPU) jpIf(addr uint16, condition bool) {
+	if condition {
+		cpu.PC = addr
+		cpu.cycles++
+	}
+}
+
 // jrIf performs a conditional relative jump based on the given condition
 func (cpu *CPU) jrIf(offset byte, condition bool) {
 	if condition {
