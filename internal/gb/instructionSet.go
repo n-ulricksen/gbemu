@@ -123,6 +123,16 @@ func (cpu *CPU) xor(b byte) {
 	cpu.setFlag(FLAG_C, false)
 }
 
+// cpl calculates the logical complement of the value stored in register A, and
+// stores the result in register A
+func (cpu *CPU) cpl() {
+	res := cpu.AF.getHi() ^ 0xFF
+	cpu.AF.setHi(res)
+
+	cpu.setFlag(FLAG_N, true)
+	cpu.setFlag(FLAG_H, true)
+}
+
 // rlca rotates A left 1 bit with wrapping, leaving the previous MSB in the LSB
 // position
 func (cpu *CPU) rlca() {

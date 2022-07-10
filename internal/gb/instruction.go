@@ -28,17 +28,25 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x05] = inst{"DEC", 1, 1, cpu.op05}
 	instructions[0x06] = inst{"LD", 2, 2, cpu.op06}
 	instructions[0x07] = inst{"RLCA", 1, 1, cpu.op07}
+	instructions[0x0A] = inst{"LD", 1, 2, cpu.op0A}
+	instructions[0x0E] = inst{"LD", 2, 2, cpu.op0E}
+	instructions[0x10] = inst{"STOP", 2, 1, cpu.op10}
+	instructions[0x11] = inst{"LD", 3, 3, cpu.op11}
+	instructions[0x12] = inst{"LD", 1, 2, cpu.op12}
+	instructions[0x13] = inst{"INC", 1, 2, cpu.op13}
 	instructions[0x18] = inst{"JR", 2, 3, cpu.op18}
 	instructions[0x1C] = inst{"INC", 1, 1, cpu.op1C}
 	instructions[0x1F] = inst{"RRA", 1, 1, cpu.op1F}
 	instructions[0x20] = inst{"JR", 2, 2, cpu.op20}
 	instructions[0x21] = inst{"LD", 3, 3, cpu.op21}
+	instructions[0x22] = inst{"LD", 1, 2, cpu.op22}
 	instructions[0x23] = inst{"INC", 1, 2, cpu.op23}
 	instructions[0x25] = inst{"DEC", 1, 1, cpu.op25}
 	instructions[0x26] = inst{"LD", 2, 2, cpu.op26}
 	instructions[0x28] = inst{"JR", 2, 2, cpu.op28}
 	instructions[0x2A] = inst{"LD", 1, 2, cpu.op2A}
 	instructions[0x2D] = inst{"DEC", 1, 1, cpu.op2D}
+	instructions[0x2F] = inst{"CPL", 1, 1, cpu.op2F}
 	instructions[0x30] = inst{"JR", 2, 2, cpu.op30}
 	instructions[0x31] = inst{"LD", 3, 3, cpu.op31}
 	instructions[0x32] = inst{"LD", 1, 2, cpu.op32}
@@ -56,11 +64,19 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x5D] = inst{"LD", 1, 1, cpu.op5D}
 	instructions[0x5F] = inst{"LD", 1, 1, cpu.op5F}
 	instructions[0x60] = inst{"LD", 1, 1, cpu.op60}
+	instructions[0x62] = inst{"LD", 1, 1, cpu.op62}
 	instructions[0x63] = inst{"LD", 1, 1, cpu.op63}
 	instructions[0x66] = inst{"LD", 1, 2, cpu.op66}
+	instructions[0x67] = inst{"LD", 1, 1, cpu.op67}
+	instructions[0x69] = inst{"LD", 1, 1, cpu.op69}
+	instructions[0x6B] = inst{"LD", 1, 1, cpu.op6B}
 	instructions[0x6C] = inst{"LD", 1, 1, cpu.op6C}
 	instructions[0x6E] = inst{"LD", 1, 2, cpu.op6E}
+	instructions[0x6F] = inst{"LD", 1, 1, cpu.op6F}
 	instructions[0x70] = inst{"LD", 1, 2, cpu.op70}
+	instructions[0x72] = inst{"LD", 1, 2, cpu.op72}
+	instructions[0x73] = inst{"LD", 1, 2, cpu.op73}
+	instructions[0x74] = inst{"LD", 1, 2, cpu.op74}
 	instructions[0x75] = inst{"LD", 1, 2, cpu.op75}
 	instructions[0x76] = inst{"HALT", 1, 1, cpu.op76}
 	instructions[0x78] = inst{"LD", 1, 1, cpu.op78}
@@ -70,11 +86,14 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x7C] = inst{"LD", 1, 1, cpu.op7C}
 	instructions[0x7D] = inst{"LD", 1, 1, cpu.op7D}
 	instructions[0x7E] = inst{"LD", 1, 2, cpu.op7E}
+	instructions[0x80] = inst{"ADD", 1, 1, cpu.op80}
 	instructions[0x8E] = inst{"ADC", 1, 2, cpu.op8E}
+	instructions[0x93] = inst{"SUB", 1, 1, cpu.op93}
 	instructions[0xA3] = inst{"AND", 1, 1, cpu.opA3}
 	instructions[0xAE] = inst{"XOR", 1, 2, cpu.opAE}
 	instructions[0xB1] = inst{"OR", 1, 1, cpu.opB1}
 	instructions[0xB7] = inst{"OR", 1, 1, cpu.opB7}
+	instructions[0xC0] = inst{"RET", 1, 2, cpu.opC0}
 	instructions[0xC3] = inst{"JP", 3, 4, cpu.opC3}
 	instructions[0xC5] = inst{"PUSH", 1, 4, cpu.opC5}
 	instructions[0xC6] = inst{"ADD", 2, 2, cpu.opC6}
@@ -95,6 +114,8 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0xF1] = inst{"POP", 1, 3, cpu.opF1}
 	instructions[0xF3] = inst{"DI", 1, 1, cpu.opF3}
 	instructions[0xF5] = inst{"PUSH", 1, 4, cpu.opF5}
+	instructions[0xF9] = inst{"LD", 1, 2, cpu.opF9}
+	instructions[0xFA] = inst{"LD", 3, 4, cpu.opFA}
 	instructions[0xFE] = inst{"CP", 2, 2, cpu.opFE}
 	instructions[0xFF] = inst{"RST", 1, 4, cpu.opFF}
 }
@@ -136,6 +157,46 @@ func (cpu *CPU) op07() {
 	cpu.rlca()
 }
 
+// LD A,(BC)
+func (cpu *CPU) op0A() {
+	addr := cpu.BC.get()
+	data := cpu.read(addr)
+	cpu.AF.setHi(data)
+}
+
+// LD C,n
+func (cpu *CPU) op0E() {
+	data := cpu.read(cpu.PC + 1)
+	cpu.BC.setLo(data)
+}
+
+// STOP n
+// According to https://gbdev.io/pandocs/CPU_Instruction_Set.html, the next
+// byte of data after a 0x10 should always be a 0x00. This word (0x1000)
+// signals the CPU to go into "low power standby mode."
+func (cpu *CPU) op10() {
+	_ = cpu.read(cpu.PC + 1)
+	cpu.stopped = true
+}
+
+// LD DE,nn
+func (cpu *CPU) op11() {
+	data := cpu.readWord(cpu.PC + 1)
+	cpu.DE.set(data)
+}
+
+// LD (DE),A
+func (cpu *CPU) op12() {
+	addr := cpu.DE.get()
+	data := cpu.AF.getHi()
+	cpu.ld8(addr, data)
+}
+
+// INC DE
+func (cpu *CPU) op13() {
+	cpu.DE.inc()
+}
+
 // JR e
 func (cpu *CPU) op18() {
 	offset := cpu.read(cpu.PC + 1)
@@ -163,6 +224,15 @@ func (cpu *CPU) op20() {
 func (cpu *CPU) op21() {
 	data := cpu.readWord(cpu.PC + 1)
 	cpu.HL.set(data)
+}
+
+// LD (HL+),A
+func (cpu *CPU) op22() {
+	addr := cpu.HL.get()
+	data := cpu.AF.getHi()
+	cpu.write(addr, data)
+
+	cpu.HL.inc()
 }
 
 // INC HL
@@ -200,6 +270,11 @@ func (cpu *CPU) op2A() {
 // DEC L
 func (cpu *CPU) op2D() {
 	cpu.dec8(&cpu.HL.loReg)
+}
+
+// CPL
+func (cpu *CPU) op2F() {
+	cpu.cpl()
 }
 
 // JR NC,e
@@ -310,6 +385,12 @@ func (cpu *CPU) op60() {
 	cpu.HL.setHi(data)
 }
 
+// LD H,D
+func (cpu *CPU) op62() {
+	data := cpu.DE.getHi()
+	cpu.HL.setHi(data)
+}
+
 // LD H,E
 func (cpu *CPU) op63() {
 	data := cpu.DE.getLo()
@@ -321,6 +402,24 @@ func (cpu *CPU) op66() {
 	addr := cpu.HL.get()
 	data := cpu.read(addr)
 	cpu.HL.setHi(data)
+}
+
+// LD H,A
+func (cpu *CPU) op67() {
+	data := cpu.AF.getHi()
+	cpu.HL.setHi(data)
+}
+
+// LD L,C
+func (cpu *CPU) op69() {
+	data := cpu.BC.getLo()
+	cpu.HL.setLo(data)
+}
+
+// LD L,E
+func (cpu *CPU) op6B() {
+	data := cpu.DE.getLo()
+	cpu.HL.setLo(data)
 }
 
 // LD L,H
@@ -336,10 +435,37 @@ func (cpu *CPU) op6E() {
 	cpu.HL.setLo(data)
 }
 
+// LD L,A
+func (cpu *CPU) op6F() {
+	data := cpu.AF.getHi()
+	cpu.HL.setLo(data)
+}
+
 // LD (HL),B
 func (cpu *CPU) op70() {
 	addr := cpu.HL.get()
 	data := cpu.BC.getHi()
+	cpu.ld8(addr, data)
+}
+
+// LD (HL),D
+func (cpu *CPU) op72() {
+	addr := cpu.HL.get()
+	data := cpu.DE.getHi()
+	cpu.ld8(addr, data)
+}
+
+// LD (HL),E
+func (cpu *CPU) op73() {
+	addr := cpu.HL.get()
+	data := cpu.DE.getLo()
+	cpu.ld8(addr, data)
+}
+
+// LD (HL),H
+func (cpu *CPU) op74() {
+	addr := cpu.HL.get()
+	data := cpu.HL.getHi()
 	cpu.ld8(addr, data)
 }
 
@@ -398,11 +524,23 @@ func (cpu *CPU) op7E() {
 	cpu.AF.setHi(data)
 }
 
+// ADD A,B
+func (cpu *CPU) op80() {
+	b := cpu.BC.getHi()
+	cpu.add(b)
+}
+
 // ADC A,(HL)
 func (cpu *CPU) op8E() {
 	addr := cpu.HL.get()
 	hl := cpu.read(addr)
 	cpu.adc(hl)
+}
+
+// SUB E
+func (cpu *CPU) op93() {
+	e := cpu.DE.getLo()
+	cpu.sub(e)
 }
 
 // AND E
@@ -428,6 +566,14 @@ func (cpu *CPU) opB1() {
 func (cpu *CPU) opB7() {
 	a := cpu.AF.getHi()
 	cpu.or(a)
+}
+
+// RET NZ
+func (cpu *CPU) opC0() {
+	cond := !cpu.getFlag(FLAG_Z)
+	cpu.retIf(cond)
+
+	cpu.PC -= instructions[0xC0].length
 }
 
 // JP nn
@@ -568,6 +714,8 @@ func (cpu *CPU) opCE() {
 func (cpu *CPU) opD0() {
 	cond := !cpu.getFlag(FLAG_C)
 	cpu.retIf(cond)
+
+	cpu.PC -= instructions[0xD0].length
 }
 
 // POP DE
@@ -644,6 +792,19 @@ func (cpu *CPU) opF3() {
 func (cpu *CPU) opF5() {
 	data := cpu.AF.get()
 	cpu.push(data)
+}
+
+// LD SP,HL
+func (cpu *CPU) opF9() {
+	data := cpu.HL.get()
+	cpu.SP = data
+}
+
+// LD A,(nn)
+func (cpu *CPU) opFA() {
+	nn := cpu.readWord(cpu.PC + 1)
+	data := cpu.read(nn)
+	cpu.AF.setHi(data)
 }
 
 // CP n
