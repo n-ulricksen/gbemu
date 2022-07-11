@@ -101,6 +101,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0xC6] = inst{"ADD", 2, 2, cpu.opC6}
 	instructions[0xC8] = inst{"RET", 1, 2, cpu.opC8}
 	instructions[0xC9] = inst{"RET", 1, 4, cpu.opC9}
+	instructions[0xCA] = inst{"JP", 3, 3, cpu.opCA}
 	instructions[0xCB] = inst{"", 2, 2, cpu.opCB} // prefix 0xCB
 	instructions[0xCD] = inst{"CALL", 3, 6, cpu.opCD}
 	instructions[0xCE] = inst{"ADC", 2, 2, cpu.opCE}
@@ -585,8 +586,6 @@ func (cpu *CPU) opB7() {
 func (cpu *CPU) opC0() {
 	cond := !cpu.getFlag(FLAG_Z)
 	cpu.retIf(cond)
-
-	cpu.PC -= instructions[0xC0].length
 }
 
 // POP BC
@@ -619,15 +618,19 @@ func (cpu *CPU) opC6() {
 func (cpu *CPU) opC8() {
 	cond := cpu.getFlag(FLAG_Z)
 	cpu.retIf(cond)
-
-	cpu.PC -= instructions[0xC8].length
 }
 
 // RET
 func (cpu *CPU) opC9() {
 	cpu.ret()
+}
 
-	cpu.PC -= instructions[0xC9].length
+// JP Z,nn
+func (cpu *CPU) opCA() {
+	nn := cpu.readWord(cpu.PC + 1)
+	cond := cpu.getFlag(FLAG_Z)
+
+	cpu.jpIf(nn, cond)
 }
 
 // Prefix instructions
@@ -727,8 +730,6 @@ func (cpu *CPU) opCB() {
 func (cpu *CPU) opCD() {
 	addr := cpu.readWord(cpu.PC + 1)
 	cpu.call(addr)
-
-	cpu.PC -= instructions[0xCD].length
 }
 
 // ADC A,n
@@ -741,8 +742,6 @@ func (cpu *CPU) opCE() {
 func (cpu *CPU) opD0() {
 	cond := !cpu.getFlag(FLAG_C)
 	cpu.retIf(cond)
-
-	cpu.PC -= instructions[0xD0].length
 }
 
 // POP DE
@@ -757,8 +756,6 @@ func (cpu *CPU) opD2() {
 	cond := !cpu.getFlag(FLAG_C)
 
 	cpu.jpIf(nn, cond)
-
-	cpu.PC -= instructions[0xD2].length
 }
 
 // PUSH DE
@@ -868,6 +865,4 @@ func (cpu *CPU) opFF() {
 	n := 0x38
 	addr := uint16(n)
 	cpu.call(addr)
-
-	cpu.PC -= instructions[0xFF].length
 }

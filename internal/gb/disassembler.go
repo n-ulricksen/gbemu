@@ -270,6 +270,9 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 			msg += "Z"
 		case 0xC9:
 			// RET
+		case 0xCA:
+			// JP Z,nn
+			msg += fmt.Sprintf("Z,0x%04X", word)
 		case 0xCB:
 			// Prefix instructions
 			var reg string

@@ -16,6 +16,12 @@ func (cpu *CPU) jpIf(addr uint16, condition bool) {
 	if condition {
 		cpu.PC = addr
 		cpu.cycles++
+
+		// Every cycle, the PC is updated according to the number of bytes used
+		// by the current instruction found in the lookup table. If a jump
+		// occurs, we must subtract the number of bytes used to counteract the
+		// automatic update to PC.
+		cpu.PC -= 3
 	}
 }
 
@@ -24,6 +30,12 @@ func (cpu *CPU) jrIf(offset byte, condition bool) {
 	if condition {
 		cpu.PC += uint16(offset)
 		cpu.cycles++
+
+		// Every cycle, the PC is updated according to the number of bytes used
+		// by the current instruction found in the lookup table. If a jump
+		// occurs, we must subtract the number of bytes used to counteract the
+		// automatic update to PC.
+		cpu.PC -= 2
 	}
 }
 
@@ -349,11 +361,13 @@ func (cpu *CPU) pop() uint16 {
 func (cpu *CPU) call(addr uint16) {
 	cpu.push(cpu.PC + 1)
 	cpu.PC = addr
+	cpu.PC -= 3
 }
 
 // ret unconditionally returns from a function
 func (cpu *CPU) ret() {
 	cpu.PC = cpu.pop()
+	cpu.PC -= 1
 }
 
 // retIf returns from a function if the given condtion is true
@@ -361,6 +375,7 @@ func (cpu *CPU) retIf(condition bool) {
 	if condition {
 		cpu.ret()
 		cpu.cycles += 3
+		cpu.PC -= 1
 	}
 }
 
