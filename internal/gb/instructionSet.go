@@ -375,7 +375,6 @@ func (cpu *CPU) retIf(condition bool) {
 	if condition {
 		cpu.ret()
 		cpu.cycles += 3
-		cpu.PC -= 1
 	}
 }
 
