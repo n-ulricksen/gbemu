@@ -25,6 +25,12 @@ func (cpu *CPU) jpIf(addr uint16, condition bool) {
 	}
 }
 
+// jr performs a relative jump using the given `offset`
+func (cpu *CPU) jr(offset byte) {
+	cpu.PC += uint16(offset)
+	cpu.PC -= 2
+}
+
 // jrIf performs a conditional relative jump based on the given condition
 func (cpu *CPU) jrIf(offset byte, condition bool) {
 	if condition {
@@ -357,11 +363,20 @@ func (cpu *CPU) pop() uint16 {
 	return u16(lo, hi)
 }
 
-// call performs an unconditional function all to the given address
+// call performs an unconditional function call to the given address
 func (cpu *CPU) call(addr uint16) {
 	cpu.push(cpu.PC + 1)
 	cpu.PC = addr
 	cpu.PC -= 3
+}
+
+// callIf performs a conditional function call to the given address if the
+// given `cond` is true
+func (cpu *CPU) callIf(addr uint16, cond bool) {
+	if cond {
+		cpu.call(addr)
+		cpu.cycles += 3
+	}
 }
 
 // ret unconditionally returns from a function
@@ -370,7 +385,7 @@ func (cpu *CPU) ret() {
 	cpu.PC -= 1
 }
 
-// retIf returns from a function if the given condtion is true
+// retIf returns from a function if the given `cond` is true
 func (cpu *CPU) retIf(condition bool) {
 	if condition {
 		cpu.ret()
