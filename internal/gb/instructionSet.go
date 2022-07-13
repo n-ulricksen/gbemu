@@ -370,6 +370,27 @@ func (cpu *CPU) call(addr uint16) {
 	cpu.PC -= 3
 }
 
+// rstAddr is the restore address lookup table, mapping  CPU opcodes to restore
+// addresses used by `cpu.rst()`
+var rstAddr = map[byte]byte{
+	0xC7: 0x00,
+	0xD7: 0x10,
+	0xE7: 0x20,
+	0xF7: 0x30,
+	0xCF: 0x08,
+	0xDF: 0x18,
+	0xEF: 0x28,
+	0xFF: 0x38,
+}
+
+// rst performs an unconditional function call to a fixed address specified by
+// the opcode
+func (cpu *CPU) rst(op byte) {
+	addr := rstAddr[op]
+	cpu.PC = uint16(addr)
+	cpu.PC -= 1
+}
+
 // callIf performs a conditional function call to the given address if the
 // given `cond` is true
 func (cpu *CPU) callIf(addr uint16, cond bool) {

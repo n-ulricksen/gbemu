@@ -901,6 +901,5 @@ func (cpu *CPU) opFE() {
 
 // RST 0x38
 func (cpu *CPU) opFF() {
-	addr := uint16(0x38)
-	cpu.call(addr)
+	cpu.rst(0xFF)
 }
