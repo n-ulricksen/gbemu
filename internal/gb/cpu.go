@@ -61,7 +61,7 @@ func (cpu *CPU) decodeAndExecute(op byte) {
 // logInstruction logs the disassembly for the current CPU instruction
 func (cpu *CPU) logInstruction() {
 	if cpu.bus.debugMode {
-		logMsg := cpu.bus.disassembly[cpu.PC]
+		logMsg := cpu.bus.disassembly[cpu.PC] + fmt.Sprintf("\t\t%d", cpu.cycles)
 		cpu.bus.log(logMsg)
 	}
 }
