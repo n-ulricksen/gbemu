@@ -92,13 +92,20 @@ func main() {
 		memAddrRe := regexp.MustCompile(`\[0x[\w]{4}\]`)
 		cycleRe := regexp.MustCompile(`\d+$`)
 
-		var line1, line2 string
-		line := 0
-		for isScanning {
-			line++
+		const linesToPrint int = 8
+		lines1 := make([]string, linesToPrint)
+		lines2 := make([]string, linesToPrint)
+		linesIdx := 0
 
-			line1 = <-lineChan1
-			line2 = <-lineChan2
+		lineCount := 0
+		for isScanning {
+			lineCount++
+
+			line1 := <-lineChan1
+			line2 := <-lineChan2
+			lines1[linesIdx] = line1
+			lines2[linesIdx] = line2
+			linesIdx = (linesIdx + 1) % linesToPrint
 
 			memAddr1 := memAddrRe.FindString(line1)
 			memAddr2 := memAddrRe.FindString(line2)
@@ -106,17 +113,33 @@ func main() {
 			cycle2 := cycleRe.FindString(line2)
 
 			if memAddr1 != memAddr2 || cycle1 != cycle2 {
-				fmt.Printf("\nDIFF IN LOGS AT LINE %d:\n", line)
+				fmt.Printf("\nDIFF IN LOGS AT LINE %d:\n", lineCount)
 				fmt.Println("-------------------------------------")
 				fmt.Printf("%-18s%s\t%s\n", "LOG", "ADDRESS", "CYCLE")
 				fmt.Printf("%-18s%s\t%s\n", fp1, memAddr1, cycle1)
 				fmt.Printf("%-18s%s\t%s\n", fp2, memAddr2, cycle2)
 				fmt.Println("-------------------------------------")
+				fmt.Println()
+
+				// Print previous lines from each log file
+				fmt.Printf("%s:\n", fp1)
+				for i := 0; i < linesToPrint; i++ {
+					i = (i + linesIdx) % linesToPrint
+					fmt.Println(lines1[i])
+				}
+				fmt.Println()
+				fmt.Printf("%s:\n", fp2)
+				for i := 0; i < linesToPrint; i++ {
+					i = (i + linesIdx) % linesToPrint
+					fmt.Println(lines2[i])
+				}
+				fmt.Println("-------------------------------------")
+
 				os.Exit(0)
 			}
 		}
 
-		fmt.Printf("Complete! Scanned %d lines.\n", line)
+		fmt.Printf("Complete! Scanned %d lines.\n", lineCount)
 	} else {
 		printUsage()
 		os.Exit(0)
