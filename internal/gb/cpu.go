@@ -1,5 +1,7 @@
 package gb
 
+import "fmt"
+
 // CPU represents a Sharp SM83 CPU core
 type CPU struct {
 	AF register // Accumulator and flags
