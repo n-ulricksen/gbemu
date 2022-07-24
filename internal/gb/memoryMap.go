@@ -30,6 +30,8 @@ const (
 
 	IO_REGISTERS_START = 0xFF00 // 128B
 	IO_REGISTERS_END   = 0xFF7F
+	IO_SB              = 0xFF01 // Serial transfer data (R/W)
+	IO_SC              = 0xFF02 // Serial transfer control (R/W)
 
 	HRAM_BEGIN = 0xFF80 // 127B
 	HRAM_END   = 0xFFFE

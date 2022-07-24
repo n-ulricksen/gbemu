@@ -24,9 +24,16 @@ type GameBoy struct {
 	logger *log.Logger
 	tw     *tabwriter.Writer
 
-	debugMode bool
+	debugMode  bool
+	debugState *debugState
 
 	disassembly []string
+}
+
+// debugState stores data relevant to CPU debugging
+type debugState struct {
+	iosb byte // IO serial bus
+	iosc byte // IO serial control
 }
 
 // New creates and returns a GameBoy instance, ready to start by running its
@@ -37,9 +44,10 @@ func New(romPath string, debug bool) *GameBoy {
 	tw := tabwriter.NewWriter(logger.Writer(), 12, 4, 2, ' ', 0)
 
 	gb := &GameBoy{
-		logger:    logger,
-		tw:        tw,
-		debugMode: debug,
+		logger:     logger,
+		tw:         tw,
+		debugMode:  debug,
+		debugState: new(debugState),
 	}
 	cpu := newCPU()
 	gb.attachCPU(cpu)
@@ -58,6 +66,11 @@ func (gb *GameBoy) Start() {
 
 	for gb.isRunning {
 		gb.Cpu.execNextInst()
+
+		// DEBUG
+		// if gb.debugMode {
+		// 	gb.logIOSerialTransfers()
+		// }
 	}
 }
 
@@ -65,6 +78,21 @@ func (gb *GameBoy) Start() {
 func (gb *GameBoy) log(msg string) {
 	fmt.Fprintln(gb.tw, msg)
 	gb.tw.Flush()
+}
+
+// logIOSerialTransfers logs write to memory at `IO_SB` or `IO_SC`
+func (gb *GameBoy) logIOSerialTransfers() {
+	iosb := gb.CartRom[IO_SB]
+	iosc := gb.CartRom[IO_SC]
+
+	if gb.debugState.iosb != iosb {
+		gb.debugState.iosb = iosb
+		gb.logger.Printf("[DEBUG_IO] IO_SB (%#04x): %#02x\n", IO_SB, iosb)
+	}
+	if gb.debugState.iosc != iosc {
+		gb.debugState.iosc = iosc
+		gb.logger.Printf("[DEBUG_IO] IO_SC (%#04x): %#02x\n", IO_SC, iosc)
+	}
 }
 
 // TODO: accept a cartridge type, extract loading the file from this method
