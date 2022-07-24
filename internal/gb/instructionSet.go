@@ -25,23 +25,20 @@ func (cpu *CPU) jpIf(addr uint16, condition bool) {
 	}
 }
 
-// jr performs a relative jump using the given `offset`
+// jr performs a relative jump using the given `offset`. This jump only affects
+// the low byte of the PC (no carry to high byte).
 func (cpu *CPU) jr(offset byte) {
-	cpu.PC += uint16(offset)
-	cpu.PC -= 2
+	cpu.PC = (cpu.PC & 0xFF00) | uint16(byte(cpu.PC)+offset)
+
+	// fmt.Printf("newPC: %#02x\n", newPC)
+	// cpu.PC += uint16(offset)
 }
 
 // jrIf performs a conditional relative jump based on the given condition
 func (cpu *CPU) jrIf(offset byte, condition bool) {
 	if condition {
-		cpu.PC += uint16(offset)
-		cpu.cycles++
-
-		// Every cycle, the PC is updated according to the number of bytes used
-		// by the current instruction found in the lookup table. If a jump
-		// occurs, we must subtract the number of bytes used to counteract the
-		// automatic update to PC.
-		cpu.PC -= 2
+		cpu.jr(offset)
+		// cpu.cycles++
 	}
 }
 
@@ -365,7 +362,7 @@ func (cpu *CPU) pop() uint16 {
 
 // call performs an unconditional function call to the given address
 func (cpu *CPU) call(addr uint16) {
-	cpu.push(cpu.PC + 1)
+	cpu.push(cpu.PC + 3)
 	cpu.PC = addr
 	cpu.PC -= 3
 }
