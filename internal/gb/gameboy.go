@@ -114,7 +114,19 @@ func (gb *GameBoy) insertCartridge(romPath string) error {
 // begin executing the loaded game ROM
 // 	reference: https://gbdev.io/pandocs/Power_Up_Sequence.html
 func (gb *GameBoy) initPowerUpSequence() {
+	// CPU
+	gb.Cpu.AF.setHi(0x01)
+	gb.Cpu.AF.setLo(0b10000000) // TODO: calculate bits 4 and 5 (see ref.)
+	gb.Cpu.BC.set(0x0013)
+	gb.Cpu.DE.set(0x00D8)
+	gb.Cpu.HL.set(0x014D)
 	gb.Cpu.PC = ENTRY_POINT
 	gb.Cpu.SP = 0xFFFE
+
+	// Hardware registers
+	for addr, val := range hardwareRegisterInit {
+		gb.CartRom[addr] = val
+	}
+
 	gb.isRunning = true
 }
