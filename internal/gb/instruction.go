@@ -107,7 +107,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0xC8] = inst{"RET", 1, 2, cpu.opC8}
 	instructions[0xC9] = inst{"RET", 1, 4, cpu.opC9}
 	instructions[0xCA] = inst{"JP", 3, 3, cpu.opCA}
-	instructions[0xCB] = inst{"", 2, 2, cpu.opCB} // prefix 0xCB
+	instructions[0xCB] = inst{"", 2, 1, cpu.opCB} // prefix 0xCB
 	instructions[0xCD] = inst{"CALL", 3, 6, cpu.opCD}
 	instructions[0xCE] = inst{"ADC", 2, 2, cpu.opCE}
 	instructions[0xD0] = inst{"RET", 1, 2, cpu.opD0}
