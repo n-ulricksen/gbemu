@@ -124,14 +124,14 @@ func main() {
 				// Print previous lines from each log file
 				fmt.Printf("%s:\n", fp1)
 				for i := 0; i < linesToPrint; i++ {
-					i = (i + linesIdx) % linesToPrint
-					fmt.Println(lines1[i])
+					idx := (i + linesIdx) % linesToPrint
+					fmt.Println(lines1[idx])
 				}
 				fmt.Println()
 				fmt.Printf("%s:\n", fp2)
 				for i := 0; i < linesToPrint; i++ {
-					i = (i + linesIdx) % linesToPrint
-					fmt.Println(lines2[i])
+					idx := (i + linesIdx) % linesToPrint
+					fmt.Println(lines2[idx])
 				}
 				fmt.Println("-------------------------------------")
 
