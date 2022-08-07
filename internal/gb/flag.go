@@ -25,12 +25,3 @@ func (cpu *CPU) getFlag(f flag) bool {
 	flags := cpu.AF.getLo()
 	return (flags & byte(f)) > 0
 }
-
-// halfCarryOccurs returns whether a half carry occurs when adding together the
-// two given bytes
-func halfCarryOccurs(b1, b2 byte) bool {
-	n1 := b1 & 0xf
-	n2 := b2 & 0xf
-
-	return ((n1 + n2) & 0x10) == 0x10
-}
