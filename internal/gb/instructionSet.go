@@ -29,16 +29,12 @@ func (cpu *CPU) jpIf(addr uint16, condition bool) {
 // the low byte of the PC (no carry to high byte).
 func (cpu *CPU) jr(offset byte) {
 	cpu.PC = (cpu.PC & 0xFF00) | uint16(byte(cpu.PC)+offset)
-
-	// fmt.Printf("newPC: %#02x\n", newPC)
-	// cpu.PC += uint16(offset)
 }
 
 // jrIf performs a conditional relative jump based on the given condition
 func (cpu *CPU) jrIf(offset byte, condition bool) {
 	if condition {
 		cpu.jr(offset)
-		// cpu.cycles++
 	}
 }
 
@@ -106,6 +102,19 @@ func (cpu *CPU) adc(add byte) {
 	cpu.setFlag(FLAG_N, false)
 	cpu.setFlag(FLAG_H, halfCarryOccurs(a, add+carry))
 	cpu.setFlag(FLAG_C, a > res)
+}
+
+// addHL performs an addition on the value stored in register HL and the value
+// stored in the given register, and stores the result in register HL.
+func (cpu *CPU) addHL(reg *register) {
+	hl := cpu.HL.get()
+	toAdd := reg.get()
+	res := hl + toAdd
+	cpu.HL.set(hl + toAdd)
+
+	cpu.setFlag(FLAG_N, false)
+	cpu.setFlag(FLAG_H, halfCarryOccurs16(hl, toAdd))
+	cpu.setFlag(FLAG_C, hl > res)
 }
 
 // and performs a bitwise and on the value in register A and the given value,

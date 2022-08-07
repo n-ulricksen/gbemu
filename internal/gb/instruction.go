@@ -36,6 +36,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x12] = inst{"LD", 1, 2, cpu.op12}
 	instructions[0x13] = inst{"INC", 1, 2, cpu.op13}
 	instructions[0x18] = inst{"JR", 2, 3, cpu.op18}
+	instructions[0x1A] = inst{"LD", 1, 2, cpu.op1A}
 	instructions[0x1C] = inst{"INC", 1, 1, cpu.op1C}
 	instructions[0x1D] = inst{"DEC", 1, 1, cpu.op1D}
 	instructions[0x1F] = inst{"RRA", 1, 1, cpu.op1F}
@@ -43,9 +44,11 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x21] = inst{"LD", 3, 3, cpu.op21}
 	instructions[0x22] = inst{"LD", 1, 2, cpu.op22}
 	instructions[0x23] = inst{"INC", 1, 2, cpu.op23}
+	instructions[0x24] = inst{"INC", 1, 1, cpu.op24}
 	instructions[0x25] = inst{"DEC", 1, 1, cpu.op25}
 	instructions[0x26] = inst{"LD", 2, 2, cpu.op26}
 	instructions[0x28] = inst{"JR", 2, 2, cpu.op28}
+	instructions[0x29] = inst{"ADD", 1, 2, cpu.op29}
 	instructions[0x2A] = inst{"LD", 1, 2, cpu.op2A}
 	instructions[0x2C] = inst{"INC", 1, 1, cpu.op2C}
 	instructions[0x2D] = inst{"DEC", 1, 1, cpu.op2D}
@@ -53,6 +56,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x30] = inst{"JR", 2, 2, cpu.op30}
 	instructions[0x31] = inst{"LD", 3, 3, cpu.op31}
 	instructions[0x32] = inst{"LD", 1, 2, cpu.op32}
+	instructions[0x35] = inst{"DEC", 1, 3, cpu.op35}
 	instructions[0x36] = inst{"LD", 2, 3, cpu.op36}
 	instructions[0x38] = inst{"JR", 2, 2, cpu.op38}
 	instructions[0x3A] = inst{"LD", 1, 2, cpu.op3A}
@@ -78,6 +82,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x6E] = inst{"LD", 1, 2, cpu.op6E}
 	instructions[0x6F] = inst{"LD", 1, 1, cpu.op6F}
 	instructions[0x70] = inst{"LD", 1, 2, cpu.op70}
+	instructions[0x71] = inst{"LD", 1, 2, cpu.op71}
 	instructions[0x72] = inst{"LD", 1, 2, cpu.op72}
 	instructions[0x73] = inst{"LD", 1, 2, cpu.op73}
 	instructions[0x74] = inst{"LD", 1, 2, cpu.op74}
@@ -95,8 +100,10 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x8E] = inst{"ADC", 1, 2, cpu.op8E}
 	instructions[0x93] = inst{"SUB", 1, 1, cpu.op93}
 	instructions[0xA3] = inst{"AND", 1, 1, cpu.opA3}
+	instructions[0xA9] = inst{"XOR", 1, 1, cpu.opA9}
 	instructions[0xAE] = inst{"XOR", 1, 2, cpu.opAE}
 	instructions[0xB1] = inst{"OR", 1, 1, cpu.opB1}
+	instructions[0xB6] = inst{"OR", 1, 2, cpu.opB6}
 	instructions[0xB7] = inst{"OR", 1, 1, cpu.opB7}
 	instructions[0xC0] = inst{"RET", 1, 2, cpu.opC0}
 	instructions[0xC1] = inst{"POP", 1, 3, cpu.opC1}
@@ -222,6 +229,13 @@ func (cpu *CPU) op18() {
 	cpu.jr(offset)
 }
 
+// LD A,(DE)
+func (cpu *CPU) op1A() {
+	addr := cpu.DE.get()
+	data := cpu.read(addr)
+	cpu.AF.setHi(data)
+}
+
 // INC E
 func (cpu *CPU) op1C() {
 	cpu.inc8(&cpu.DE.loReg)
@@ -264,6 +278,11 @@ func (cpu *CPU) op23() {
 	cpu.HL.inc()
 }
 
+// INC H
+func (cpu *CPU) op24() {
+	cpu.inc8(&cpu.HL.hiReg)
+}
+
 // DEC H
 func (cpu *CPU) op25() {
 	cpu.dec8(&cpu.HL.hiReg)
@@ -280,6 +299,11 @@ func (cpu *CPU) op28() {
 	offset := cpu.read(cpu.PC + 1)
 	cond := cpu.getFlag(FLAG_Z)
 	cpu.jrIf(offset, cond)
+}
+
+// ADD HL,HL
+func (cpu *CPU) op29() {
+	cpu.addHL(&cpu.HL)
 }
 
 // LD A,(HL+)
@@ -325,6 +349,18 @@ func (cpu *CPU) op32() {
 	cpu.ld8(addr, data)
 
 	cpu.HL.dec()
+}
+
+// DEC (HL)
+func (cpu *CPU) op35() {
+	addr := cpu.HL.get()
+	data := cpu.read(addr)
+	res := data - 1
+	cpu.write(addr, res)
+
+	cpu.setFlag(FLAG_Z, res == 0)
+	cpu.setFlag(FLAG_N, true)
+	cpu.setFlag(FLAG_H, halfCarryOccurs(data, 0xFF))
 }
 
 // LD (HL),n
@@ -486,6 +522,13 @@ func (cpu *CPU) op70() {
 	cpu.ld8(addr, data)
 }
 
+// LD (HL),C
+func (cpu *CPU) op71() {
+	addr := cpu.HL.get()
+	data := cpu.BC.getLo()
+	cpu.ld8(addr, data)
+}
+
 // LD (HL),D
 func (cpu *CPU) op72() {
 	addr := cpu.HL.get()
@@ -594,6 +637,12 @@ func (cpu *CPU) opA3() {
 	cpu.and(e)
 }
 
+// XOR C
+func (cpu *CPU) opA9() {
+	c := cpu.BC.getLo()
+	cpu.xor(c)
+}
+
 // XOR (HL)
 func (cpu *CPU) opAE() {
 	addr := cpu.HL.get()
@@ -605,6 +654,13 @@ func (cpu *CPU) opAE() {
 func (cpu *CPU) opB1() {
 	c := cpu.BC.getLo()
 	cpu.or(c)
+}
+
+// OR (HL)
+func (cpu *CPU) opB6() {
+	addr := cpu.HL.get()
+	data := cpu.read(addr)
+	cpu.or(data)
 }
 
 // OR A

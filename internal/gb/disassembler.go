@@ -82,6 +82,9 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		case 0x18:
 			// JR e
 			msg += fmt.Sprintf("0x%02X", op1)
+		case 0x1A:
+			// LD A,(DE)
+			msg += "A,(DE)"
 		case 0x1C:
 			// INC E
 			msg += "E"
@@ -102,6 +105,9 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		case 0x23:
 			// INC HL
 			msg += "HL"
+		case 0x24:
+			// INC H
+			msg += "H"
 		case 0x25:
 			// DEC H
 			msg += "H"
@@ -111,6 +117,9 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		case 0x28:
 			// JR Z,e
 			msg += fmt.Sprintf("Z,0x%02X", op1)
+		case 0x29:
+			// ADD HL,HL
+			msg += "HL,HL"
 		case 0x2A:
 			// LD A,(HL+)
 			msg += "A,(HL+)"
@@ -131,6 +140,9 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		case 0x32:
 			// LD (HL-),A
 			msg += "(HL-),A"
+		case 0x35:
+			// DEC (HL)
+			msg += "(HL)"
 		case 0x36:
 			// LD (HL),n
 			msg += fmt.Sprintf("(HL),0x%02X", op1)
@@ -206,6 +218,9 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		case 0x70:
 			// LD (HL),B
 			msg += "(HL),B"
+		case 0x71:
+			// LD (HL),C
+			msg += "(HL),C"
 		case 0x72:
 			// LD (HL),D
 			msg += "(HL),D"
@@ -256,12 +271,18 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		case 0xA3:
 			// AND E
 			msg += "E"
+		case 0xA9:
+			// XOR C
+			msg += "C"
 		case 0xAE:
 			// XOR (HL)
 			msg += "(HL)"
 		case 0xB1:
 			// OR C
 			msg += "C"
+		case 0xB6:
+			// OR (HL)
+			msg += "(HL)"
 		case 0xC0:
 			// RET NZ
 			msg += "NZ"
