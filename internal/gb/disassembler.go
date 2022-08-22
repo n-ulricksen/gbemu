@@ -85,6 +85,9 @@ func (gb *GameBoy) disassemble(start uint16, end uint16) error {
 		case 0x1A:
 			// LD A,(DE)
 			msg += "A,(DE)"
+		case 0x1B:
+			// DEC DE
+			msg += "DE"
 		case 0x1C:
 			// INC E
 			msg += "E"
