@@ -40,6 +40,7 @@ func (cpu *CPU) setupInstructionLookup() {
 	instructions[0x1B] = inst{"DEC", 1, 2, cpu.op1B}
 	instructions[0x1C] = inst{"INC", 1, 1, cpu.op1C}
 	instructions[0x1D] = inst{"DEC", 1, 1, cpu.op1D}
+	instructions[0x1E] = inst{"LD", 2, 2, cpu.op1E}
 	instructions[0x1F] = inst{"RRA", 1, 1, cpu.op1F}
 	instructions[0x20] = inst{"JR", 2, 2, cpu.op20}
 	instructions[0x21] = inst{"LD", 3, 3, cpu.op21}
@@ -250,6 +251,12 @@ func (cpu *CPU) op1C() {
 // DEC E
 func (cpu *CPU) op1D() {
 	cpu.dec8(&cpu.DE.hiReg)
+}
+
+// LD E,n
+func (cpu *CPU) op1E() {
+	data := cpu.read(cpu.PC + 1)
+	cpu.DE.setLo(data)
 }
 
 // RRA
